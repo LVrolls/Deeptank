@@ -1,0 +1,2600 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DEEP TANK</title>
+<style>
+:root{
+  --abyss:#050b11; --hull:#0b1620; --hull2:#0f1e2a; --rule:#1b3241;
+  --dim:#6f93a4; --read:#d6ebf2; --lume:#4fd8c4; --amber:#ffb24a;
+  --danger:#ff6b5c; --crys:#b98cff; --gold:#ffd06a;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--abyss);color:var(--read);font-family:var(--sans);font-size:13px;
+  display:flex;justify-content:center;align-items:stretch;-webkit-font-smoothing:antialiased}
+#panel{width:100%;max-width:412px;display:flex;flex-direction:column;background:var(--hull);
+  border-left:1px solid var(--rule);border-right:1px solid var(--rule);overflow:hidden}
+
+/* ---------- header ---------- */
+header{flex:none;padding:7px 10px 6px;border-bottom:1px solid var(--rule);
+  background:linear-gradient(180deg,#0e1c27,#0a141d)}
+.hrow{display:flex;align-items:center;gap:8px}
+.mark{font-family:var(--mono);font-size:9px;letter-spacing:.22em;color:var(--dim)}
+.tankpick{display:flex;gap:3px;margin-left:auto}
+.tankpick button{font-family:var(--mono);font-size:9px;letter-spacing:.1em;background:#0a1620;
+  color:var(--dim);border:1px solid var(--rule);padding:3px 6px;cursor:pointer;border-radius:2px}
+.tankpick button.on{color:var(--lume);border-color:#2c5a63;background:#0d2028}
+.tankpick button:disabled{opacity:.35;cursor:not-allowed}
+.wallet{display:flex;gap:13px;margin-top:5px;align-items:baseline}
+.w{font-family:var(--mono);font-size:13.5px}
+.w small{font-family:var(--mono);font-size:8px;letter-spacing:.16em;color:var(--dim);display:block;margin-bottom:1px}
+.w b{font-weight:500}
+.w.cr b{color:var(--crys)}
+.rate{font-family:var(--mono);font-size:8.5px;color:#4e7a86;margin-left:auto;text-align:right;line-height:1.5}
+
+/* ---------- tank view ---------- */
+#tankwrap{flex:none;position:relative;background:#020609;border-bottom:1px solid var(--rule)}
+#tank{display:block;width:100%}
+#event{position:absolute;left:0;right:0;bottom:0;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.06em;padding:5px 8px;display:none;gap:8px;align-items:center;
+  background:rgba(6,14,20,.86);border-top:1px solid #2a3f2c}
+#event.show{display:flex}
+#event .etxt{color:var(--amber);flex:1}
+#event button{font-family:var(--mono);font-size:9px;letter-spacing:.1em;background:#1d2a18;
+  border:1px solid #3c5533;color:#cfe6b4;padding:3px 8px;cursor:pointer;border-radius:2px}
+
+/* ---------- water ---------- */
+#water{flex:none;padding:8px 10px 9px;border-bottom:1px solid var(--rule);background:var(--hull2)}
+.param{margin-bottom:8px}
+.param:last-of-type{margin-bottom:0}
+.prow{display:flex;align-items:baseline;font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+  color:var(--dim);margin-bottom:3px}
+.prow .pv{margin-left:auto;letter-spacing:.04em;font-size:11px;color:var(--read)}
+.prow .pv.bad{color:var(--amber)}
+.track{position:relative;height:16px}
+.bands{position:absolute;left:0;right:0;top:5px;height:6px;border-radius:1px;background:#081219;overflow:hidden}
+.bands i{position:absolute;top:0;bottom:0;display:block}
+.bands u{position:absolute;top:0;bottom:0;border-left:1px solid var(--lume);border-right:1px solid var(--lume);
+  background:rgba(79,216,196,.14)}
+input[type=range]{-webkit-appearance:none;appearance:none;position:absolute;left:-2px;right:-2px;top:0;
+  width:calc(100% + 4px);height:16px;background:transparent;margin:0;cursor:ew-resize}
+input[type=range]:focus-visible{outline:1px solid var(--lume);outline-offset:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:5px;height:16px;border-radius:1px;
+  background:var(--read);border:0;box-shadow:0 0 6px rgba(214,235,242,.5)}
+input[type=range]::-moz-range-thumb{width:5px;height:16px;border-radius:1px;border:0;
+  background:var(--read);box-shadow:0 0 6px rgba(214,235,242,.5)}
+.legend{font-family:var(--mono);font-size:8.5px;color:#4a6d79;margin-top:6px;letter-spacing:.04em;line-height:1.5}
+
+/* ---------- nav ---------- */
+nav{flex:none;display:flex;border-bottom:1px solid var(--rule);background:#08121a}
+nav button{flex:1;font-family:var(--sans);font-size:9.5px;letter-spacing:.04em;background:none;border:0;
+  border-bottom:2px solid transparent;color:#5b7c89;padding:7px 0 6px;cursor:pointer;position:relative}
+nav button.on{color:var(--lume);border-bottom-color:var(--lume);background:#0b1a22}
+nav button b{display:block;font-weight:400;font-size:6.5px;font-family:var(--mono);color:#3f5f6b;
+  letter-spacing:.06em;margin-top:2px}
+nav button.on b{color:#3d7c78}
+nav button em{position:absolute;top:3px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--amber)}
+nav button em.cr{background:var(--crys)}
+
+main{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px;min-height:130px}
+main::-webkit-scrollbar{width:6px}
+main::-webkit-scrollbar-thumb{background:#1e3746;border-radius:3px}
+
+/* ---------- generic bits ---------- */
+h2{font-family:var(--mono);font-size:8.5px;letter-spacing:.2em;color:var(--dim);font-weight:400;margin:2px 0 7px}
+h2:not(:first-child){margin-top:15px}
+.hint{font-size:11px;color:#5f8290;line-height:1.55;margin-bottom:8px}
+.row{display:flex;align-items:center;gap:7px;padding:6px 7px;margin-bottom:4px;background:#0a1720;
+  border:1px solid #162935;border-radius:3px;flex-wrap:wrap}
+.row.sel{border-color:#2f6a6e;background:#0c1f26}
+.row.gone{opacity:.45}
+.row.wait{border-color:#5c4526;background:#1a1509}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.nm{font-size:11.5px;line-height:1.3;min-width:0;flex:1}
+.nm em{font-style:normal;font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;color:#5f8290;display:block}
+.meta{font-family:var(--mono);font-size:9px;color:#5f8290;text-align:right;line-height:1.45;flex:none}
+.hp{width:34px;height:3px;background:#16242c;border-radius:2px;overflow:hidden;margin-top:2px;margin-left:auto}
+.hp i{display:block;height:100%;background:var(--lume)}
+.hp.low i{background:var(--danger)}
+.stars{font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:.05em}
+button.act{font-family:var(--mono);font-size:9px;letter-spacing:.1em;background:#12242e;
+  border:1px solid #23414f;color:#a9cfda;padding:5px 8px;cursor:pointer;border-radius:2px;flex:none}
+button.act:hover:not(:disabled){border-color:#3a6a7a;color:var(--read)}
+button.act:disabled{opacity:.32;cursor:not-allowed}
+button.act.go{background:#0f2a28;border-color:#2c6058;color:#8fe0cf}
+button.act.warn{background:#2a1a16;border-color:#5c332a;color:#e8a48f}
+button.act.cr{background:#1d1630;border-color:#4b3a72;color:#cdb4ff}
+button.act.big{padding:10px 8px;font-size:10.5px;letter-spacing:.14em}
+.grid{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.grid button{flex:1;min-width:74px}
+.tag{font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:#4a6d79;border:1px solid #1c3441;
+  padding:2px 4px;border-radius:2px;flex:none}
+.tag.ok{color:var(--lume);border-color:#2c5a63}
+.tag.hot{color:var(--amber);border-color:#5c4526}
+.tag.cr{color:var(--crys);border-color:#4b3a72}
+.bar{height:4px;background:#122029;border-radius:2px;overflow:hidden;margin:5px 0 9px}
+.bar i{display:block;height:100%;background:#3f7f8c}
+.bar.food i{background:#7fa855}
+.bar.meat i{background:#b0644a}
+.bar.waste i{background:#8a7a3c}
+.bar.thin{margin:4px 0 0;height:3px}
+.node{padding:7px 8px;margin-bottom:4px;background:#0a1720;border:1px solid #162935;border-radius:3px}
+.node.done{border-color:#245049;background:#0a1d1e}
+.node .nh{display:flex;align-items:center;gap:7px}
+.node .nt{font-size:11.5px;flex:1}
+.node .nd{font-size:10.5px;color:#5f8290;line-height:1.5;margin-top:3px}
+.gene{display:flex;gap:6px;font-family:var(--mono);font-size:8.5px;color:#5f8290;margin-top:3px}
+.gene span b{color:#9dc4d0;font-weight:400}
+.log{font-family:var(--mono);font-size:9.5px;line-height:1.75;color:#5f8290}
+.log div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log b{color:#8fb4c0;font-weight:400}
+.log .wn{color:var(--amber)}
+.log .gd{color:var(--lume)}
+.log .cr{color:var(--crys)}
+.empty{font-size:11px;color:#4a6d79;padding:12px 4px;line-height:1.6}
+.warnbox{padding:8px 10px;margin-bottom:8px;border-radius:4px;font-size:11px;line-height:1.6;
+  background:#2a1408;border:1px solid #7a3a1c;color:#ffcfae}
+textarea{width:100%;height:60px;resize:vertical;font-family:var(--mono);font-size:9.5px;line-height:1.5;
+  color:var(--read);background:#08131a;border:1px solid #1c3441;border-radius:3px;padding:6px;margin-bottom:6px}
+
+/* ---------- EXPEDITION ---------- */
+.expwrap{margin:-10px -10px 0;padding:10px;background:
+  radial-gradient(120% 70% at 50% 0%,#0c2434,#050d14 72%)}
+.exphead{display:flex;align-items:flex-end;gap:8px;margin-bottom:9px}
+.exphead h1{font-size:19px;font-weight:600;letter-spacing:.02em;line-height:1}
+.exphead h1 small{display:block;font-family:var(--mono);font-size:8px;letter-spacing:.24em;
+  color:#4e7a86;margin-bottom:3px;font-weight:400}
+.depthbadge{margin-left:auto;text-align:right;font-family:var(--mono)}
+.depthbadge b{display:block;font-size:21px;font-weight:500;color:var(--lume);line-height:1}
+.depthbadge small{font-size:8px;letter-spacing:.18em;color:#4e7a86}
+.o2{margin-bottom:10px}
+.o2 .lab{display:flex;font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:var(--dim);margin-bottom:4px}
+.o2 .lab span:last-child{margin-left:auto;color:var(--read)}
+.o2bar{height:8px;border-radius:5px;background:#08161d;overflow:hidden;box-shadow:inset 0 0 0 1px #1c3441}
+.o2bar i{display:block;height:100%;border-radius:5px;
+  background:linear-gradient(90deg,#3fd0e0,#7fe3d0);transition:width .4s}
+.o2bar.low i{background:linear-gradient(90deg,#ff6b5c,#ffb24a)}
+.profile{position:relative;margin:0 0 10px;padding-left:26px}
+.profile .axis{position:absolute;left:11px;top:4px;bottom:4px;width:2px;
+  background:linear-gradient(180deg,#1f4454,#0a1a22)}
+.stg{position:relative;margin-bottom:5px;padding:6px 8px;border-radius:3px;
+  background:#0a1720;border:1px solid #162935;font-size:11px;line-height:1.4}
+.stg:before{content:"";position:absolute;left:-19px;top:11px;width:9px;height:9px;border-radius:50%;
+  background:#0d1f28;border:2px solid #24485a}
+.stg.done:before{background:var(--lume);border-color:#2c6058}
+.stg.now{border-color:#2c6058;background:#0c1f26}
+.stg.now:before{background:var(--amber);border-color:#5c4526;
+  box-shadow:0 0 0 4px rgba(255,178,74,.16)}
+.stg .sd{font-family:var(--mono);font-size:8.5px;color:#5f8290;letter-spacing:.06em}
+.stg .gain{color:var(--lume);font-family:var(--mono);font-size:9.5px}
+.stg .loss{color:var(--amber);font-family:var(--mono);font-size:9.5px}
+.cargo{background:#0a1720;border:1px solid #1e3a3a;border-radius:4px;padding:8px 9px;margin-bottom:10px}
+.cargo h4{font-family:var(--mono);font-size:8.5px;letter-spacing:.2em;color:var(--dim);
+  font-weight:400;margin-bottom:6px}
+.cargo .ci{display:flex;font-family:var(--mono);font-size:11px;line-height:1.9}
+.cargo .ci span:last-child{margin-left:auto;color:var(--lume)}
+.cargo .ci.cr span:last-child{color:var(--crys)}
+.decide{display:flex;gap:6px;margin-bottom:8px}
+.decide button{flex:1}
+.sitecard{position:relative;padding:9px 10px;margin-bottom:6px;border-radius:4px;overflow:hidden;
+  background:linear-gradient(100deg,#0b1c26,#0a141b);border:1px solid #1a3140;cursor:pointer}
+.sitecard.on{border-color:#2c6058;background:linear-gradient(100deg,#0d2a2a,#0a1c22)}
+.sitecard.lock{opacity:.5;cursor:not-allowed}
+.sitecard .st{display:flex;align-items:baseline;gap:7px}
+.sitecard .st b{font-size:12.5px;font-weight:600}
+.sitecard .st .dep{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--lume)}
+.sitecard .sd{font-size:10.5px;color:#5f8290;line-height:1.5;margin-top:3px}
+.crewslot{display:flex;gap:5px;margin-bottom:8px}
+.crewslot div{flex:1;height:52px;border-radius:4px;border:1px dashed #24485a;background:#08141b;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  font-family:var(--mono);font-size:8.5px;color:#3f5f6b}
+.crewslot div.full{border-style:solid;border-color:#2c6058;background:#0c1f26;color:var(--read)}
+.crewslot div .dot{width:12px;height:12px}
+
+/* ---------- AQUARIUM ---------- */
+.aqwrap{margin:-10px -10px 0;padding:12px 10px 10px;
+  background:radial-gradient(120% 80% at 50% 0%,#2a2113,#0a1016 74%)}
+.aqhead{text-align:center;margin-bottom:10px}
+.aqhead h1{font-size:20px;font-weight:600;letter-spacing:.06em}
+.aqhead small{display:block;font-family:var(--mono);font-size:8px;letter-spacing:.26em;
+  color:#8a7346;margin-bottom:4px}
+.rating{font-size:25px;letter-spacing:.14em;color:var(--gold);line-height:1.2;
+  text-shadow:0 0 16px rgba(255,208,106,.28)}
+.aqstat{display:flex;gap:6px;margin-bottom:10px}
+.aqstat div{flex:1;text-align:center;padding:7px 4px;border-radius:4px;
+  background:rgba(255,208,106,.06);border:1px solid rgba(255,208,106,.18)}
+.aqstat b{display:block;font-family:var(--mono);font-size:14px;color:var(--gold);line-height:1.2}
+.aqstat span{font-family:var(--mono);font-size:7.5px;letter-spacing:.16em;color:#8a7346}
+.score{margin-bottom:9px}
+.score .sr{display:flex;align-items:center;gap:7px;font-size:11px;margin-bottom:5px}
+.score .sr span:first-child{width:52px;color:#9db3bd;flex:none}
+.score .sb{flex:1;height:5px;border-radius:3px;background:#141a20;overflow:hidden}
+.score .sb i{display:block;height:100%;background:linear-gradient(90deg,#b98a3a,var(--gold))}
+.score .sr b{font-family:var(--mono);font-size:9.5px;color:var(--gold);width:38px;text-align:right;flex:none}
+.vip{padding:9px 10px;margin-bottom:6px;border-radius:4px;
+  background:linear-gradient(180deg,#241a2f,#141020);border:1px solid #4b3a72}
+.vip h4{font-size:12px;font-weight:600;color:#cdb4ff;margin-bottom:4px}
+.vip .vd{font-size:10.5px;color:#9d8fc0;line-height:1.55}
+.vip .vr{font-family:var(--mono);font-size:10px;color:var(--crys);margin-top:5px}
+.mus{display:grid;grid-template-columns:1fr repeat(3,38px);gap:3px;align-items:center;margin-bottom:3px}
+.mus .mn{font-size:10.5px;color:#9db3bd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  padding-right:4px}
+.mus .mn small{font-family:var(--mono);font-size:7.5px;color:#5f8290;display:block}
+.mus.full .mn{color:var(--gold)}
+.mcell{height:34px;border-radius:4px;background:#0b141b;border:1px solid #17242e;
+  display:flex;align-items:center;justify-content:center;position:relative}
+.mcell.have{background:#1b1710;border-color:rgba(255,208,106,.45);
+  box-shadow:inset 0 0 10px rgba(255,208,106,.10)}
+.mcell.seen{background:#0d1620;border-color:#1c2b36}
+.mcell.none:after{content:"·";color:#25333d;font-size:15px;line-height:1}
+.mcell svg{display:block}
+.mcell .qp{position:absolute;right:2px;bottom:1px;font-family:var(--mono);font-size:7px;
+  color:var(--gold);opacity:.85}
+.mcell.seen svg{opacity:.28}
+.mhead{display:grid;grid-template-columns:1fr repeat(3,38px);gap:3px;margin-bottom:5px}
+.mhead span{font-family:var(--mono);font-size:7.5px;letter-spacing:.1em;color:#5f8290;text-align:center}
+.filt{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:9px}
+.filt button{font-family:var(--mono);font-size:9px;letter-spacing:.08em;padding:4px 8px;
+  border-radius:20px;cursor:pointer;background:#0a1620;border:1px solid #1c3441;color:#5f8290}
+.filt button.on{background:#0d2028;border-color:#2c5a63;color:var(--lume)}
+.jrow{display:flex;gap:8px;padding:6px 8px;margin-bottom:3px;border-radius:3px;
+  background:#0a1720;border-left:2px solid #1e3746;align-items:flex-start}
+.jrow.gd{border-left-color:var(--lume)}
+.jrow.wn{border-left-color:var(--amber)}
+.jrow.cr{border-left-color:var(--crys)}
+.jrow .jt{flex:1;font-size:11px;line-height:1.5;min-width:0;word-break:break-word}
+.jrow .jt b{color:var(--read);font-weight:500}
+.jrow .jm{font-family:var(--mono);font-size:8.5px;color:#4a6d79;white-space:nowrap;flex:none;padding-top:2px}
+.jday{font-family:var(--mono);font-size:8px;letter-spacing:.18em;color:#3f5f6b;
+  margin:12px 0 5px;padding-bottom:3px;border-bottom:1px solid #16242e}
+.dex{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.dex span{aspect-ratio:1;border-radius:3px;background:#0a1620;border:1px solid #162935;
+  display:flex;align-items:center;justify-content:center}
+.dex span.on{border-color:#2c5a63;background:#0c1f26}
+</style>
+</head>
+<body>
+<div id="panel">
+  <header>
+    <div class="hrow"><span class="mark">DEEP TANK</span><span class="tankpick" id="tankpick"></span></div>
+    <div class="wallet">
+      <span class="w"><small>BUBBLES</small><b id="wBub">0</b></span>
+      <span class="w cr"><small>CRYSTAL</small><b id="wCry">0</b></span>
+      <span class="w"><small>DATA</small><b id="wData">0</b></span>
+      <span class="rate" id="wRate"></span>
+    </div>
+  </header>
+  <div id="tankwrap">
+    <canvas id="tank"></canvas>
+    <div id="event"><span class="etxt" id="etxt"></span><button id="ebtn"></button></div>
+  </div>
+  <div id="water">
+    <div class="param"><div class="prow"><span>TEMP</span><span class="pv" id="vTemp"></span></div>
+      <div class="track"><div class="bands" id="bTemp"></div>
+        <input type="range" id="sTemp" min="4" max="30" step="0.2" aria-label="温度"></div></div>
+    <div class="param"><div class="prow"><span>WATER</span><span class="pv" id="vO2"></span></div>
+      <div class="track"><div class="bands" id="bO2"></div>
+        <input type="range" id="sO2" min="30" max="100" step="1" aria-label="水质"></div></div>
+    <div class="legend" id="legend"></div>
+  </div>
+  <nav id="nav">
+    <button data-t="tank" class="on">水槽<b>TANK</b></button>
+    <button data-t="stock">鱼群<b>STOCK</b></button>
+    <button data-t="breed">育种<b>BREED</b></button>
+    <button data-t="exp">远征<b>DIVE</b></button>
+    <button data-t="aqua">展馆<b>HALL</b></button>
+    <button data-t="lab">研究<b>LAB</b></button>
+    <button data-t="journal">日志<b>LOG</b></button>
+  </nav>
+  <main id="body"></main>
+</div>
+<script>
+"use strict";
+/* ===================== storage ===================== */
+const KEY="deeptank.v3",BAK=KEY+".bak",LEGACY=["deeptank.v2","deeptank.v1"];
+const IO={ok:null,at:0,err:""};
+const hasWS=()=>!!(window.storage&&window.storage.get&&window.storage.set);
+const hasLS=()=>{try{if(!window.localStorage)return false;
+  localStorage.setItem("__dt","1");localStorage.removeItem("__dt");return true;}catch(e){return false;}};
+const Store={
+  async get(k){let v=null;
+    if(hasWS()){try{const r=await window.storage.get(k);if(r&&r.value)v=r.value;}catch(e){}}
+    if(!v&&hasLS()){try{const r=localStorage.getItem(k);if(r)v=r;}catch(e){}}
+    return v;},
+  async set(k,v){let wrote=0,err="";
+    if(hasWS()){try{await window.storage.set(k,v);wrote++;}catch(e){err=String(e&&e.message||e);}}
+    if(hasLS()){try{localStorage.setItem(k,v);wrote++;}catch(e){err=String(e&&e.message||e);}}
+    if(k===KEY){IO.ok=wrote>0;IO.at=Date.now();IO.err=wrote?"":(err||"没有可用的存储后端");}
+    return wrote>0;}
+};
+function storageNames(){const a=[];if(hasWS())a.push("应用内存储");if(hasLS())a.push("浏览器 localStorage");return a;}
+
+/* ===================== helpers ===================== */
+const TAU=Math.PI*2;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const lerp=(a,b,t)=>a+(b-a)*t;
+const fmt=n=>{n=Math.floor(n);if(n<1000)return""+n;if(n<1e6)return(n/1000).toFixed(n<1e4?2:1)+"k";
+  if(n<1e9)return(n/1e6).toFixed(2)+"M";return(n/1e9).toFixed(2)+"B";};
+const mmss=s=>{s=Math.max(0,Math.ceil(s));return s<60?s+"s":Math.floor(s/60)+"m"+String(s%60).padStart(2,"0");};
+const $=id=>document.getElementById(id);
+let uid=1;
+
+/* ===================== species ===================== */
+const SPECIES={
+  minnow :{nm:"玻璃小鱲", tier:1,cost:30,  temp:[16,24],o2:[58,95], diet:"herb",rate:.060,len:9, col:"#bfe6ef",glow:0,  body:"fish"},
+  guppy  :{nm:"锈鳍孔雀", tier:1,cost:48,  temp:[20,28],o2:[52,90], diet:"herb",rate:.080,len:10,col:"#d98a52",glow:0,  body:"fish"},
+  grazer :{nm:"食泥鲴",   tier:1,cost:70,  temp:[12,22],o2:[46,85], diet:"herb",rate:.090,len:12,col:"#9aa87e",glow:0,  body:"bottom",clean:.02},
+  tetra  :{nm:"提灯灯脂", tier:2,cost:150, temp:[18,26],o2:[62,98], diet:"herb",rate:.140,len:10,col:"#6fe3c8",glow:.55,body:"fish"},
+  snapper:{nm:"赤铜鲷",   tier:2,cost:190, temp:[14,22],o2:[58,90], diet:"herb",rate:.160,len:14,col:"#c9743a",glow:0,  body:"fish"},
+  angel  :{nm:"薄纱神仙", tier:2,cost:260, temp:[22,28],o2:[66,98], diet:"herb",rate:.185,len:15,col:"#e8d9f0",glow:.2, body:"disc"},
+  goby   :{nm:"热泉虾虎", tier:2,cost:300, temp:[24,30],o2:[42,75], diet:"herb",rate:.210,len:11,col:"#ffd27a",glow:.3, body:"bottom",find:1},
+  jelly  :{nm:"炭火水母", tier:3,cost:560, temp:[8,18], o2:[42,80], diet:"herb",rate:.300,len:13,col:"#ff8a5c",glow:.9, body:"jelly"},
+  ray    :{nm:"幽灵鳐",   tier:3,cost:680, temp:[10,20],o2:[52,85], diet:"herb",rate:.330,len:20,col:"#cfe3ea",glow:.3, body:"ray"},
+  pike   :{nm:"蓝矛狗鱼", tier:3,cost:760, temp:[12,22],o2:[68,100],diet:"carn",rate:.480,len:22,col:"#4f8fd8",glow:0,  body:"torpedo"},
+  squid  :{nm:"玻璃乌贼", tier:3,cost:900, temp:[6,16], o2:[48,80], diet:"carn",rate:.540,len:18,col:"#a8f0e0",glow:.7, body:"squid",find:1},
+  lantern:{nm:"深渊提灯", tier:4,cost:1700,temp:[4,12], o2:[38,70], diet:"herb",rate:.700,len:16,col:"#7de0ff",glow:1,  body:"lantern"},
+  eel    :{nm:"盘绕鳗",   tier:4,cost:2200,temp:[6,16], o2:[42,75], diet:"carn",rate:.920,len:27,col:"#8a5fd8",glow:.4, body:"eel"},
+  angler :{nm:"骨鳍鮟鱇", tier:4,cost:2600,temp:[4,10], o2:[38,68], diet:"carn",rate:1.10,len:24,col:"#e0d0a8",glow:.85,body:"angler",find:1},
+  levi   :{nm:"苍白巨影", tier:5,cost:5600,temp:[4,10], o2:[36,65], diet:"carn",rate:1.55,len:34,col:"#eef4f6",glow:.6, body:"levi"}
+};
+const SKEYS=Object.keys(SPECIES);
+/* three morphs only — the old five made the last dex slots pure RNG grind */
+const MORPH={
+  base  :{nm:"原色",bonus:0,   shift:0,  sat:1,  lit:1,   art:0},
+  irid  :{nm:"虹彩",bonus:.55, shift:52, sat:1.3,lit:1.14, art:8},
+  aurora:{nm:"极光",bonus:1.30,shift:-70,sat:1.5,lit:1.32, art:20}
+};
+const MKEYS=Object.keys(MORPH);
+const STAGE=["幼鱼","亚成","成鱼"];
+const FOODS={
+  feed :{nm:"配合饲料",kind:"plant",cost:16,add:60,mess:.10},
+  krill:{nm:"磷虾",    kind:"meat", cost:30,add:55,mess:.12}
+};
+/* ===================== decor: purely cosmetic, feeds the exhibition score ===================== */
+const DECOR={
+  kelp  :{nm:"海带丛",   cost:280, art:5},
+  pots  :{nm:"陶罐群",   cost:420, art:6},
+  rock  :{nm:"玄武岩柱", cost:600, art:8},
+  anchor:{nm:"沉锚",     cost:850, art:9},
+  clam  :{nm:"巨蛤",     cost:1200,art:11},
+  wreck :{nm:"沉船残骸", cost:1800,art:14},
+  orb   :{nm:"玻璃浮球", cost:2400,art:12},
+  coral :{nm:"发光珊瑚", cost:3200,art:17},
+  vent  :{nm:"微型热泉", cost:4800,art:20},
+  bones :{nm:"鲸骨架",   cost:7000,art:26}
+};
+const DKEYS=Object.keys(DECOR);
+/* ===================== expedition ===================== */
+const ZONES={
+  shelf:{nm:"浅礁边缘", maxD:3, cost:120,  stage:42, o2:9,  pay:[120,240],   nd:"平缓的入门海域，几乎不会出事"},
+  slope:{nm:"陡坡裂谷", maxD:5, cost:450,  stage:55, o2:12, pay:[380,720],   nd:"洋流开始复杂，偶有掠食者"},
+  yard :{nm:"沉船墓场", maxD:7, cost:1100, stage:62, o2:14, pay:[900,1700],  nd:"废弃船体密集，适合中段推进",need:"exped3"},
+  vent :{nm:"热泉喷口", maxD:9, cost:2600, stage:70, o2:16, pay:[2100,3900], nd:"高温高压，结晶富集",need:"sonar"},
+  plain:{nm:"深渊平原", maxD:12,cost:6000, stage:80, o2:18, pay:[4600,8600], nd:"广袤无光，未知生物的家",need:"sonar"},
+  void :{nm:"无光深渊", maxD:16,cost:14000,stage:95, o2:21, pay:[10000,19000],nd:"只有传承过的水族馆才能定位",need:"legacy"}
+};
+const ZKEYS=Object.keys(ZONES);
+/* encounter pool — weights shift with depth */
+const ENC={
+  vein  :{nm:"矿脉",     ico:"◆",w:d=>26,            eff:"bub"},
+  crys  :{nm:"结晶簇",   ico:"✦",w:d=>7+d*1.5,       eff:"crystal"},
+  data  :{nm:"异常读数", ico:"◇",w:d=>14,            eff:"data"},
+  egg   :{nm:"卵鞘",     ico:"○",w:d=>5+d*.8,        eff:"egg"},
+  relic :{nm:"古代残骸", ico:"▣",w:d=>2+d*.9,        eff:"relic"},
+  fauna :{nm:"未知生物", ico:"✧",w:d=>3+d*.7,        eff:"species"},
+  current:{nm:"逆流",    ico:"≈",w:d=>10+d*.6,       eff:"o2loss"},
+  pred  :{nm:"掠食者",   ico:"▲",w:d=>3+d*1.5,       eff:"predator"},
+  calm  :{nm:"静水区",   ico:"·",w:d=>9,             eff:"o2gain"},
+  cache :{nm:"补给残骸", ico:"▤",w:d=>6,             eff:"jackpot"}
+};
+const EKEYS=Object.keys(ENC);
+const RELICS={
+  netfilter:{nm:"古代滤网",nd:"废物清除效率 +60%"},
+  lens     :{nm:"棱镜透镜",nd:"数据产出 +20%"},
+  pump     :{nm:"螺旋泵",  nd:"气泡产出 +15%"},
+  eggcase  :{nm:"石化卵鞘",nd:"孵化时间 −25%"},
+  charm    :{nm:"鲸骨护符",nd:"远征氧气消耗 −15%"},
+  ledger   :{nm:"潮汐账本",nd:"项目与展馆结晶奖励 +25%"},
+  spore    :{nm:"共生孢子",nd:"废物产生量 −35%"},
+  crown    :{nm:"深渊冠冕",nd:"全部鱼的耐受区间 +0.8"},
+  compass  :{nm:"锈蚀罗盘",nd:"远征遭遇质量提升（好事权重 +30%）"},
+  chime    :{nm:"深海铃",  nd:"贵宾出现频率 +40%"}
+};
+const RLKEYS=Object.keys(RELICS);
+const XPTIER=[{x:0,nm:"新手"},{x:4,nm:"熟手"},{x:10,nm:"老手"},{x:20,nm:"传奇"}];
+
+/* ===================== research ===================== */
+const RESEARCH={
+  observ  :{nm:"观测阵列",  data:20, nd:"数据产出 +60%"},
+  filter  :{nm:"生态过滤",  data:32, nd:"废物自动清除，效率随鱼数缩放"},
+  heater  :{nm:"温控单元",  data:44, nd:"温度不再漂移，耐受区间 +1.5"},
+  manifold:{nm:"气泡歧管",  data:60, nd:"气泡产出 +25%"},
+  medbay  :{nm:"药浴舱",    data:74, nd:"疾病可免费立即治疗"},
+  incub   :{nm:"孵化箱",    data:92, nd:"孵化时间 −45%，孵化位 +2"},
+  tank2   :{nm:"二号缸",    data:120,cry:14, nd:"开启第二个水槽，容量 +2"},
+  feeder  :{nm:"自动投饵机",data:150,nd:"饵料见底时自动补充"},
+  sub     :{nm:"潜航器",    data:180,cry:10, nd:"可同时进行两支远征队"},
+  lightA  :{nm:"深层照明",  data:210,nd:"发光鱼种产出 +30%，展馆美观 +10"},
+  genetics:{nm:"遗传实验室",data:250,nd:"变异概率 ×3，基因遗传更稳定"},
+  sonar   :{nm:"声呐阵列",  data:300,cry:26, nd:"解锁热泉与深渊平原，氧气消耗 −20%"},
+  registry:{nm:"品系登记处",data:340,nd:"可登记品系：永久加成＋基因组保存"},
+  manifest:{nm:"深渊名录",  data:400,cry:20, nd:"商店解锁四、五级鱼种"},
+  tank3   :{nm:"三号缸",    data:480,cry:55, nd:"开启第三个水槽，容量 +2"},
+  dome    :{nm:"深海穹顶",  data:600,cry:90, req:"tank3",nd:"所有水槽容量再 +2"},
+  editor  :{nm:"基因编辑器",data:760,req:"registry",nd:"产卵时产出与耐受取双亲较高值，繁育取较低值（冷却更短）"},
+  hatchery:{nm:"苗场合作",  data:420,cry:40,req:"registry",nd:"解锁苗场订购 — 可用结晶直接购买高基因鱼卵"}
+};
+const RKEYS=Object.keys(RESEARCH);
+const THEORY={base:260,mul:1.34,gain:.02};   /* repeatable, keeps DATA alive forever */
+
+/* ===================== research projects (replaces one-shot orders) ===================== */
+const PROJECTS=[
+  {id:"school",nm:"集群行为研究",nd:"观察同种鱼的成群效应",
+   stages:[{t:"在同一缸内养 4 条同种成鱼",chk:s=>s.tanks.some(t=>{const c={};t.fish.forEach(f=>{if(f.stage===2)c[f.sp]=(c[f.sp]||0)+1;});return Object.values(c).some(v=>v>=4);})},
+           {t:"保持该缸平均适应度 ≥ 88% 累计 20 分钟",timed:1200,chk:s=>tankBestComfort(s)>=.88},
+           {t:"提交 2 条同种成鱼",deliver:{count:2,sameSp:1,stage:2}}],
+   cry:26,data:80},
+  {id:"lineage",nm:"世代谱系研究",nd:"追踪基因在世代间的传递",
+   stages:[{t:"孵化一条 F3 以上的后代",chk:s=>allFish(s).some(f=>f.gen>=3)},
+           {t:"培育出产出基因 ≥ 1.45 的个体",chk:s=>allFish(s).some(f=>f.g.v>=1.45)},
+           {t:"提交 1 条 F4 以上成鱼",deliver:{count:1,minGen:4,stage:2}}],
+   cry:34,data:110},
+  {id:"deep",nm:"深水适应性研究",nd:"低温低氧环境下的生理表现",
+   stages:[{t:"饲养 1 条三级以上鱼种",chk:s=>allFish(s).some(f=>SPECIES[f.sp].tier>=3)},
+           {t:"把某个缸的温度维持在 12°C 以下 10 分钟",timed:600,chk:s=>s.tanks.some(t=>t.unlocked&&t.fish.length&&t.temp<=12)},
+           {t:"完成 2 次深度 ≥ 4 的远征",count:{key:"deepDive",need:2}}],
+   cry:44,data:150},
+  {id:"pigment",nm:"色素变异研究",nd:"寻找稳定的变异形态",
+   stages:[{t:"图鉴记录任意变异形态",chk:s=>Object.keys(s.dex).some(k=>!/:base$/.test(k))},
+           {t:"同时饲养 2 条变异形态个体",chk:s=>allFish(s).filter(f=>f.mo!=="base").length>=2},
+           {t:"提交 1 条变异形态成鱼",deliver:{count:1,morph:1,stage:2}}],
+   cry:52,data:170},
+  {id:"census",nm:"深渊物种普查",nd:"为名录补全野外种群资料",
+   stages:[{t:"发现 1 种野外鱼种",chk:s=>Object.keys(s.disc).length>=1},
+           {t:"图鉴记录 8 种形态",chk:s=>Object.keys(s.dex).length>=8},
+           {t:"完成 3 次远征",count:{key:"exped",need:3}}],
+   cry:60,data:200}
+];
+/* ===================== legacy perks ===================== */
+const PERKS={
+  start2 :{nm:"预置二号缸",  cost:2,nd:"传承后直接拥有二号缸"},
+  seed   :{nm:"启动资金",    cost:1,nd:"传承后获得 3000 气泡与 8 结晶"},
+  pair   :{nm:"配对本能",    cost:2,nd:"孵化的后代自动补足缺少的性别"},
+  crew4  :{nm:"扩编",        cost:3,nd:"远征队伍上限 +1（4 人）"},
+  o2tank :{nm:"高压气瓶",    cost:2,nd:"远征初始氧气 +25"},
+  yield  :{nm:"深海驯化",    cost:3,nd:"全局气泡产出 +25%"},
+  insight:{nm:"研究惯性",    cost:3,nd:"全局数据产出 +30%"},
+  vault  :{nm:"品系金库",    cost:2,nd:"每个已登记品系的气泡加成翻倍（+2% → +4%）"},
+  deeper :{nm:"深度许可",    cost:4,nd:"解锁无光深渊，所有海域深度上限 +2"}
+};
+const PKEYS=Object.keys(PERKS);
+const GOALS=[
+  {id:"g1", nm:"第一批住户",nd:"养到 3 条鱼",          chk:s=>allFish(s).length>=3},
+  {id:"g2", nm:"成年",      nd:"养出 1 条成鱼",        chk:s=>allFish(s).some(f=>f.stage===2)},
+  {id:"g3", nm:"下一代",    nd:"孵化 1 枚鱼卵",        chk:s=>s.stats.hatched>=1},
+  {id:"g4", nm:"初次下潜",  nd:"完成 1 次远征",        chk:s=>s.stats.exped>=1},
+  {id:"g5", nm:"开馆",      nd:"向展馆捐赠 3 件展品",  chk:s=>Object.keys(s.museum||{}).length>=3},
+  {id:"g6", nm:"结晶",      nd:"累计获得 50 结晶",     chk:s=>s.stats.cryTotal>=50},
+  {id:"g7", nm:"项目",      nd:"完成 1 个科研项目",    chk:s=>s.stats.projects>=1},
+  {id:"g8", nm:"深潜",      nd:"单次远征到达深度 5",   chk:s=>s.stats.maxDepth>=5},
+  {id:"g9", nm:"育种者",    nd:"图鉴记录 8 种形态",    chk:s=>Object.keys(s.dex).length>=8},
+  {id:"g21",nm:"套装",      nd:"集齐某鱼种的全部 3 形态",chk:s=>SKEYS.some(sp=>MKEYS.every(mo=>!!(s.museum||{})[sp+":"+mo]))},
+  {id:"g22",nm:"馆藏过半",  nd:"展馆收录 23 件展品",   chk:s=>Object.keys(s.museum||{}).length>=23},
+  {id:"g23",nm:"全收录",    nd:"展馆 45 件展品全满",   chk:s=>Object.keys(s.museum||{}).length>=45},
+  {id:"g10",nm:"变异",      nd:"培育出虹彩或极光",     chk:s=>Object.keys(s.dex).some(k=>!/:base$/.test(k))},
+  {id:"g11",nm:"三星展馆",  nd:"展馆评分达到 3 星",    chk:s=>hallStars(s)>=3},
+  {id:"g12",nm:"品系",      nd:"登记 3 个品系",        chk:s=>Object.keys(s.strains).length>=3},
+  {id:"g13",nm:"遗物",      nd:"收集 4 件遗物",        chk:s=>Object.keys(s.relics).length>=4},
+  {id:"g14",nm:"扩建",      nd:"开启三号缸",           chk:s=>!!s.res.tank3},
+  {id:"g15",nm:"深渊",      nd:"饲养 1 条四级以上鱼种",chk:s=>allFish(s).some(f=>SPECIES[f.sp].tier>=4)},
+  {id:"g16",nm:"五星展馆",  nd:"展馆评分达到 5 星",    chk:s=>hallStars(s)>=5},
+  {id:"g17",nm:"深度 10",   nd:"单次远征到达深度 10",  chk:s=>s.stats.maxDepth>=10},
+  {id:"g18",nm:"极限选育",  nd:"产出基因达到 1.90",    chk:s=>allFish(s).some(f=>f.g.v>=1.9)},
+  {id:"g19",nm:"传承",      nd:"完成 1 次世代传承",    chk:s=>s.legacyRuns>=1},
+  {id:"g20",nm:"巨影",      nd:"饲养苍白巨影",         chk:s=>allFish(s).some(f=>f.sp==="levi")}
+];
+/* ===================== state ===================== */
+function newTank(i){return{i,temp:21,o2:88,waste:0,plant:70,meat:0,fish:[],eggs:[],decor:{},unlocked:i===0};}
+function freshStats(){return{hatched:0,died:0,eaten:0,bought:0,projects:0,exped:0,deepDive:0,
+  lost:0,cryTotal:0,maxDepth:0,vip:0,judge:0,spliced:0,registered:0,peakBub:0,donated:0,sets:0};}
+function newState(keep){
+  const L=keep||{pts:0,perks:{},runs:0,claimedP:0};
+  const st={
+    v:3,t:Date.now(),age:0,at:0,
+    bub:180,cry:0,data:0,
+    tanks:[newTank(0),newTank(1),newTank(2)],
+    res:{},theory:0,dex:{},disc:{},goals:{},log:[],
+    ev:null,evCd:420,hold:[],strains:{},relics:{},
+    proj:{active:[],done:{},cd:60},
+    dives:[],crew:[],reports:[],
+    museum:{},
+  hall:{open:true,vip:null,vipCd:300,judge:null,judgeCd:540,up:{light:0,guide:0,ticket:0}},
+    legacy:L,legacyRuns:L.runs,
+    stats:freshStats(),
+    sel:[],spliceSel:null
+  };
+  if(L.perks.start2){st.res.tank2=1;st.tanks[1].unlocked=1;}
+  if(L.perks.seed){st.bub+=3000;st.cry+=8;}
+  return st;
+}
+let S=newState();
+const PERK=k=>!!(S.legacy&&S.legacy.perks&&S.legacy.perks[k]);
+const REL=k=>!!(S.relics&&S.relics[k]);
+const cap=()=>4+(S.res.tank2?2:0)+(S.res.tank3?2:0)+(S.res.dome?2:0);
+const eggCap=()=>3+(S.res.incub?2:0);
+const diveCap=()=>1+(S.res.sub?1:0);
+const crewCap=()=>3+(PERK("crew4")?1:0);
+const tank=()=>S.tanks[S.at];
+const allFish=s=>s.tanks.reduce((a,t)=>a.concat(t.fish),[]);
+const inDive=()=>S.dives.reduce((a,d)=>a.concat(d.crew),[]);
+
+/* ===================== fish ===================== */
+function gene0(){return{v:clamp(rnd(.92,1.10),.5,2.0),h:clamp(rnd(0,.5),0,7),f:clamp(rnd(.92,1.08),.45,1.7)};}
+function makeFish(sp,mo,stage,g,gen){
+  return{u:uid++,sp,mo:mo||"base",stage:stage||0,gro:stage===2?200:stage===1?70:0,hp:100,
+    sex:Math.random()<.5?"F":"M",cd:0,age:0,gen:gen||1,g:g||gene0(),xp:0,lk:false,
+    x:rnd(.12,.88),y:rnd(.2,.8),dir:Math.random()<.5?-1:1,ty:rnd(.2,.8),turn:rnd(.5,4),
+    pitch:0,ph:rnd(0,TAU),sp2:rnd(.6,1.1)};
+}
+const fishName=f=>SPECIES[f.sp].nm+(f.mo!=="base"?"·"+MORPH[f.mo].nm:"");
+const fishLen=f=>SPECIES[f.sp].len*[.5,.75,1][f.stage];
+const dexKey=f=>f.sp+":"+f.mo;
+function xpTier(f){const x=f.xp||0;let i=0;for(let k=0;k<XPTIER.length;k++)if(x>=XPTIER[k].x)i=k;return i;}
+const xpName=f=>XPTIER[xpTier(f)].nm;
+function stars(f){
+  const sc=(f.g.v-.9)/1.1*.55+clamp(f.g.h/5,0,1)*.27+clamp((1.1-f.g.f)/.55,0,1)*.18;
+  return clamp(1+Math.round(sc*4.2),1,5);
+}
+const starStr=f=>{const n=stars(f);return"★".repeat(n)+"☆".repeat(5-n);};
+function recordDex(f){
+  const k=dexKey(f);
+  if(!S.dex[k]){S.dex[k]=1;S.data+=10;log("图鉴记录 <b>"+fishName(f)+"</b>  +10 数据","gd");}
+}
+const LOGCAT={
+  life :{nm:"生活",test:/孵化|长成|死亡|吃掉|购入|卖出|移入|安置|放归|补给/},
+  breed:{nm:"育种",test:/配对|产下|品系|拼接|登记|苗场/},
+  dive :{nm:"远征",test:/远征|出发|启程|归来|失踪|遗物|发现新鱼种|深度/},
+  hall :{nm:"展馆",test:/入藏|集齐|贵宾|评审|展馆|门票/},
+  lab  :{nm:"研究",test:/研究|图鉴|里程碑|达成|理论|项目|传承/},
+  warn :{nm:"异常",test:/病|缺氧|骤降|漂移|藻华|水质|已满|不能|至少/}
+};
+const LKEYS=Object.keys(LOGCAT);
+function logCat(t){
+  const plain=t.replace(/<[^>]*>/g,"");
+  for(const k of LKEYS)if(LOGCAT[k].test.test(plain))return k;
+  return "life";
+}
+function log(t,cls,cat){
+  S.log.unshift({t,c:cls||"",k:cat||logCat(t),a:Math.round(S.age)});
+  if(S.log.length>260)S.log.length=260;
+  dirty.log=1;dirty.journal=1;
+}
+function ago(a){
+  const d=Math.max(0,Math.round(S.age-a));
+  if(d<60)return d+"秒前";
+  if(d<3600)return Math.floor(d/60)+"分钟前";
+  if(d<86400)return Math.floor(d/3600)+"小时前";
+  return Math.floor(d/86400)+"天前";
+}
+function hex2hsl(h){
+  let r=parseInt(h.slice(1,3),16)/255,g=parseInt(h.slice(3,5),16)/255,b=parseInt(h.slice(5,7),16)/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let hu=0,s=0,l=(mx+mn)/2,d=mx-mn;
+  if(d){s=l>.5?d/(2-mx-mn):d/(mx+mn);
+    hu=mx===r?((g-b)/d+(g<b?6:0)):mx===g?((b-r)/d+2):((r-g)/d+4);hu*=60;}
+  return[hu,s*100,l*100];
+}
+function fishColor(f,alpha){
+  const m=MORPH[f.mo]||MORPH.base,hsl=hex2hsl(SPECIES[f.sp].col);
+  const H=(hsl[0]+m.shift+360)%360,Sa=clamp(hsl[1]*m.sat,0,100),L=clamp(hsl[2]*m.lit,6,94);
+  return alpha===undefined?"hsl("+H+" "+Sa+"% "+L+"%)":"hsla("+H+" "+Sa+"% "+L+"% / "+alpha+")";
+}
+function placeFish(f,prefer){
+  const order=[];const p=S.tanks[prefer];
+  if(p&&p.unlocked)order.push(p);
+  for(const z of S.tanks)if(z.unlocked&&order.indexOf(z)<0)order.push(z);
+  for(const z of order)if(z.fish.length<cap()){z.fish.push(f);return z;}
+  S.hold.push(f);return null;
+}
+function hatchTime(){return Math.round(50*(S.res.incub?.55:1)*(REL("eggcase")?.75:1));}
+
+/* ===================== water & comfort ===================== */
+function padBase(){return(S.res.heater?1.5:0)+(REL("crown")?.8:0);}
+function fitBand(v,band,p){
+  const lo=band[0]-p,hi=band[1]+p;
+  if(v>=lo&&v<=hi)return 1;
+  const d=v<lo?lo-v:v-hi,span=Math.max(2.5,(hi-lo)*.55);
+  return clamp(1-d/span,0,1);
+}
+function o2Pen(t){
+  let p=t.waste*.26+Math.max(0,t.fish.length-4)*1.1;
+  if(S.ev&&S.ev.k==="hypox"&&S.ev.tk===t.i)p+=12;
+  return p;
+}
+const effO2=t=>clamp(t.o2-o2Pen(t),0,100);
+function symb(t){
+  const sp={};let carn=0;
+  for(const f of t.fish){sp[f.sp]=1;if(SPECIES[f.sp].diet==="carn"&&f.stage===2)carn++;}
+  const k=Object.keys(sp).length;
+  return{scav:!!sp.grazer&&Object.keys(sp).some(x=>SPECIES[x].diet==="carn"),
+    lumen:!!(sp.tetra&&sp.lantern),drift:!!(sp.ray&&sp.squid),diverse:k>=4,apex:carn>=2,kinds:k};
+}
+function refreshThreat(t){
+  let m=0;for(const f of t.fish)if(SPECIES[f.sp].diet==="carn"&&f.stage>=1)m=Math.max(m,fishLen(f));
+  t.threat=m;
+}
+function comfort(f,t){
+  const d=SPECIES[f.sp],p=padBase()+f.g.h;
+  const a=fitBand(t.temp,d.temp,p),b=fitBand(effO2(t),d.o2,p*2);
+  let v=clamp(.42*((a+b)/2)+.58*Math.min(a,b),0,1);
+  if(d.diet!=="carn"&&t.threat&&fishLen(f)<t.threat*.72)v*=t.decor.wreck?.96:.9;
+  return v;
+}
+function avgComfort(s){
+  const arr=allFish(s);if(!arr.length)return 0;
+  let sum=0;for(const t of s.tanks){refreshThreat(t);for(const x of t.fish)sum+=comfort(x,t);}
+  return sum/arr.length;
+}
+function tankBestComfort(s){
+  let best=0;
+  for(const t of s.tanks){
+    if(!t.unlocked||!t.fish.length)continue;
+    refreshThreat(t);
+    let sum=0;for(const f of t.fish)sum+=comfort(f,t);
+    best=Math.max(best,sum/t.fish.length);
+  }
+  return best;
+}
+
+/* ===================== income (additive, not multiplicative) ===================== */
+const FISHK=.40;
+function schoolBonus(f,t){
+  let n=0;for(const o of t.fish)if(o.sp===f.sp)n++;
+  return n>=5?.25:n>=3?.15:0;
+}
+function fishIncome(f,t){
+  const d=SPECIES[f.sp];
+  let bonus=MORPH[f.mo].bonus+(f.g.v-1)+schoolBonus(f,t)
+    +(S.res.manifold?.25:0)+S.theory*THEORY.gain
+    +(REL("pump")?.15:0)+(PERK("yield")?.25:0)
+    +Object.keys(S.strains).length*(PERK("vault")?.04:.02);
+  const sy=symb(t);
+  if(sy.lumen&&d.glow>0)bonus+=.18;
+  if(sy.drift)bonus+=.12;
+  if(sy.apex)bonus+=.15;
+  if(S.res.lightA&&d.glow>0)bonus+=.30;
+  return FISHK*d.rate*[.25,.6,1][f.stage]*comfort(f,t)*(f.hp/100)*(1+bonus);
+}
+/* ---- museum:每种鱼的每个形态只能入藏一次，入藏后永久保留 ---- */
+const mKey=(sp,mo)=>sp+":"+mo;
+const donated=(sp,mo)=>!!(S.museum&&S.museum[mKey(sp,mo)]);
+const museumCount=()=>Object.keys(S.museum||{}).length;
+const MUSEUM_SLOTS=SKEYS.length*MKEYS.length;
+const speciesComplete=sp=>MKEYS.every(mo=>donated(sp,mo));
+/* an exhibit is worth more the better the specimen behind it */
+function specQuality(o){
+  return clamp((o.v-.9)/1.1,0,1)*.62+clamp(o.h/5,0,1)*.22+clamp((1.1-o.f)/.55,0,1)*.16;
+}
+function exhibitBonus(o){return 1+specQuality(o)*1.6;}
+function donateReward(sp,mo,f){
+  const t=SPECIES[sp].tier;
+  const q=f?exhibitBonus({v:f.g.v,h:f.g.h,f:f.g.f}):1;
+  return{bub:Math.floor(SPECIES[sp].cost*(1+MORPH[mo].bonus)*2.4*q),
+    cry:Math.max(1,Math.round((1+t*1.5+(mo==="irid"?2:mo==="aurora"?6:0))*q)),
+    data:Math.round((8+t*5+(mo==="base"?0:10))*q),q};
+}
+/* donating a strictly better specimen upgrades the existing exhibit */
+function upgradeGain(f){
+  const cur=S.museum[mKey(f.sp,f.mo)];
+  if(!cur)return 0;
+  return specQuality({v:f.g.v,h:f.g.h,f:f.g.f})-specQuality(cur);
+}
+function canDonate(f){
+  if(!f||f.lk||f.stage<2)return false;
+  if(!donated(f.sp,f.mo))return true;
+  return upgradeGain(f)>=.04;
+}
+function donate(u){
+  let src=null,tk=null;
+  for(const t of S.tanks){const i=t.fish.findIndex(x=>x.u===u);if(i>=0){src=t.fish[i];tk=t;break;}}
+  if(!src||!canDonate(src))return;
+  if(allFish(S).length<=1){log("至少要留一条鱼看家","wn");return;}
+  const isUp=donated(src.sp,src.mo);
+  const r=donateReward(src.sp,src.mo,src);
+  if(isUp){r.bub=Math.floor(r.bub*.45);r.cry=Math.max(1,Math.round(r.cry*.5));r.data=Math.round(r.data*.5);}
+  S.museum[mKey(src.sp,src.mo)]={sp:src.sp,mo:src.mo,gen:src.gen,
+    v:src.g.v,h:src.g.h,f:src.g.f,stars:stars(src),at:Math.round(S.age)};
+  tk.fish.splice(tk.fish.indexOf(src),1);
+  S.sel=S.sel.filter(x=>x!==u);S.crew=S.crew.filter(x=>x!==u);
+  S.stats.donated++;S.bub+=r.bub;S.data+=r.data;
+  let bonus=0;
+  const v=S.hall.vip;
+  if(v&&v.sp===src.sp&&v.mo===src.mo){bonus=Math.floor(v.cry*.6);S.hall.vip=null;S.hall.vipCd=rnd(360,620);}
+  gainCry(r.cry*(REL("ledger")?1.25:1)+bonus,(isUp?"展品升级 · ":"入藏 · ")+fishName(src)+(bonus?"（贵宾求购加成）":""));
+  log("<b>"+fishName(src)+"</b> "+(isUp?"替换了原展品":"已入藏")+"  +"+fmt(r.bub)+" 泡 +"+r.data+" 数据","gd");
+  if(!isUp&&speciesComplete(src.sp)){
+    S.stats.sets++;
+    gainCry(6+SPECIES[src.sp].tier*3,"集齐 "+SPECIES[src.sp].nm+" 全部形态");
+    S.data+=40;
+  }
+  dirty.aqua=dirty.stock=dirty.breed=dirty.lab=1;
+}
+/* ---- exhibition hall ---- */
+function hallScore(s){
+  s=s||S;
+  const mus=s.museum||{};
+  let coll=0,rare=0;const spSeen={};
+  for(const k in mus){
+    const e=mus[k];if(!SPECIES[e.sp])continue;
+    coll+=(4+SPECIES[e.sp].tier*2)*exhibitBonus(e);
+    rare+=(e.mo==="irid"?6:e.mo==="aurora"?14:0);
+    spSeen[e.sp]=1;
+  }
+  let sets=0;
+  for(const sp of SKEYS)if(MKEYS.every(mo=>!!mus[sp+":"+mo]))sets+=12;
+  let art=0;
+  for(const t of s.tanks)if(t.unlocked)for(const k in t.decor)if(t.decor[k])art+=DECOR[k].art;
+  if(s.res.lightA)art+=10;
+  art+=(s.hall.up.light||0)*6;
+  const guide=(s.hall.up.guide||0)*5;
+  const breadth=Object.keys(spSeen).length*3;
+  /* fittings can only amplify a real collection, never replace one */
+  const base=coll+rare+sets+breadth;
+  const capF=30+base*1.5;
+  const fit=Math.min(art+guide,capF);
+  return{coll:Math.round(coll),rare:Math.round(rare),sets,breadth,
+    art:Math.round(art),guide,fit:Math.round(fit),capped:art+guide>capF,
+    total:Math.round(base+fit)};
+}
+function hallStars(s){
+  const t=hallScore(s||S).total;
+  return t>=620?5:t>=400?4:t>=220?3:t>=95?2:t>=28?1:0;
+}
+function ticketPrice(){return 1+(S.hall.up.ticket||0)*.6;}
+function hallIncome(){
+  if(!S.hall.open)return 0;
+  return Math.pow(hallScore().total,1.10)*.055*ticketPrice();
+}
+function visitors(){return Math.round(Math.pow(hallScore().total,1.10)*.16);}
+function income(){
+  let r=0;
+  for(const t of S.tanks){refreshThreat(t);for(const f of t.fish)r+=fishIncome(f,t);}
+  return r+hallIncome();
+}
+function dataRate(){
+  const kinds={};let sum=0,n=0;
+  for(const t of S.tanks)for(const f of t.fish){kinds[dexKey(f)]=1;sum+=comfort(f,t);n++;}
+  if(!n)return 0;
+  let m=(S.res.observ?1.6:1)*(REL("lens")?1.2:1)*(PERK("insight")?1.3:1);
+  if(S.tanks.some(t=>t.unlocked&&t.fish.length&&symb(t).diverse))m*=1.2;
+  return .020*Object.keys(kinds).length*(sum/n)*m;
+}
+function gainCry(n,why){
+  n=Math.floor(n);if(n<=0)return 0;
+  S.cry+=n;S.stats.cryTotal+=n;
+  if(why)log(why+"  <b>+"+n+" 结晶</b>","cr");
+  return n;
+}
+/* ===================== main step ===================== */
+function step(dt,light){
+  S.age+=dt;
+  S.bub+=income()*dt;
+  S.data+=dataRate()*dt;
+  if(S.bub>S.stats.peakBub)S.stats.peakBub=S.bub;
+
+  for(const t of S.tanks){
+    if(!t.unlocked)continue;
+    refreshThreat(t);
+    const n=t.fish.length;
+    if(!S.res.heater){
+      const drift=(S.ev&&S.ev.k==="surge"&&S.ev.tk===t.i)?.05:.012;
+      t.temp=clamp(t.temp+(21-t.temp)*.0004*dt+(Math.random()-.5)*drift*dt,4,30);
+    }
+    if(S.res.feeder&&n){
+      if(t.plant<18){const f=FOODS.feed;
+        if(S.bub>=f.cost){S.bub-=f.cost;t.plant=clamp(t.plant+f.add,0,100);t.waste=clamp(t.waste+f.add*f.mess*.5,0,100);}}
+      if(t.meat<18&&t.fish.some(f=>SPECIES[f.sp].diet==="carn")){const f=FOODS.krill;
+        if(S.bub>=f.cost){S.bub-=f.cost;t.meat=clamp(t.meat+f.add,0,100);t.waste=clamp(t.waste+f.add*f.mess*.5,0,100);}}
+    }
+    let herb=0,carn=0;
+    for(const f of t.fish){
+      const need=.003+fishLen(f)*.00025;
+      if(SPECIES[f.sp].diet==="carn")carn+=need;else herb+=need;
+    }
+    const gp=Math.min(t.plant,herb*dt),gm=Math.min(t.meat,carn*dt);
+    t.plant=clamp(t.plant-gp,0,100);t.meat=clamp(t.meat-gm,0,100);
+    const pF=herb>0?gp/(herb*dt):1,mF=carn>0?gm/(carn*dt):1;
+    /* waste: filtration now scales with population instead of a flat trickle */
+    let clean=0;
+    if(S.res.filter)clean+=.02+.006*n;
+    if(REL("netfilter"))clean*=1.6;
+    for(const f of t.fish)if(SPECIES[f.sp].clean)clean+=SPECIES[f.sp].clean*[.4,.7,1][f.stage];
+    if(symb(t).scav)clean*=1.5;
+    if(t.waste>70)clean+=.012;
+    const gen=.0025*n*(REL("spore")?.65:1);
+    t.waste=clamp(t.waste+gen*dt-clean*dt,0,100);
+
+    for(let i=t.fish.length-1;i>=0;i--){
+      const f=t.fish[i],d=SPECIES[f.sp],c=comfort(f,t),fed=d.diet==="carn"?mF:pF;
+      f.age+=dt;
+      let dh=0,bad=false;
+      dh+=(c-.62)*2.2;
+      if(c<.62)bad=true;
+      if(fed<.5)dh-=(.5-fed)*1.2;
+      if(t.waste>62){dh-=(t.waste-62)*.028;bad=true;}
+      if(S.ev&&S.ev.k==="ich"&&S.ev.tk===t.i){dh-=.6;bad=true;}
+      if(dh<0)dh*=Math.sqrt(clamp(f.hp/100,.10,1));
+      f.hp=clamp(f.hp+dh*dt*.25,0,100);
+      if(!bad&&f.hp<6)f.hp=6;
+      if(light&&f.hp<10)f.hp=10;
+      if(f.hp<=0){t.fish.splice(i,1);S.stats.died++;
+        log("<b>"+fishName(f)+"</b> 死亡 — 检查水质","wn");dirty.stock=dirty.breed=1;continue;}
+      if(f.stage<2){
+        f.gro+=dt*.70*c*(fed>.5?1:.25)*(f.hp/100);
+        const th=f.stage===0?70:200;
+        if(f.gro>=th){f.stage++;dirty.stock=dirty.breed=1;
+          if(f.stage===2)log("<b>"+fishName(f)+"</b> 长成成鱼 "+starStr(f));}
+      }
+      if(f.cd>0)f.cd=Math.max(0,f.cd-dt);
+    }
+    if(!light)for(const f of t.fish){
+      if(SPECIES[f.sp].diet!=="carn"||f.stage<1)continue;
+      const ch=(mF<.6?.0012:.00008)*dt*(t.decor.wreck?.6:1);
+      if(Math.random()<ch){
+        const prey=t.fish.filter(o=>o!==f&&!o.show&&fishLen(o)<fishLen(f)*.72);
+        if(prey.length){const v=pick(prey);t.fish.splice(t.fish.indexOf(v),1);
+          S.stats.eaten++;t.waste=clamp(t.waste+6,0,100);
+          log("<b>"+fishName(f)+"</b> 吃掉了 "+fishName(v),"wn");dirty.stock=dirty.breed=1;}
+      }
+    }
+    for(let i=t.eggs.length-1;i>=0;i--){
+      const e=t.eggs[i];e.t-=dt;
+      if(e.t<=0){
+        t.eggs.splice(i,1);
+        let sex=null;
+        if(PERK("pair")){
+          const same=t.fish.filter(f=>f.sp===e.sp);
+          if(same.length&&!same.some(f=>f.sex==="F"))sex="F";
+          else if(same.length&&!same.some(f=>f.sex==="M"))sex="M";
+        }
+        const f=makeFish(e.sp,e.mo,0,e.g,e.gen);
+        if(sex)f.sex=sex;
+        S.stats.hatched++;recordDex(f);
+        const z=placeFish(f,t.i);
+        log("<b>"+fishName(f)+"</b> 孵化 F"+f.gen+" "+starStr(f)+(z?(z!==t?" → "+(z.i+1)+"号缸":""):" · 缸满，已待安置"),z?"gd":"wn");
+        dirty.stock=dirty.breed=1;
+      }
+    }
+  }
+  diveTick(dt);
+  projTick(dt);
+  hallTick(dt);
+  if(S.ev){S.ev.t-=dt;if(S.ev.t<=0){S.ev=null;S.evCd=rnd(300,560);dirty.ev=1;}}
+  else{S.evCd-=dt;if(S.evCd<=0){rollEvent();S.evCd=rnd(300,560);}}
+  if(!allFish(S).length&&!S.hold.length&&!S.dives.length&&S.bub<SPECIES.minnow.cost){
+    const h=S.tanks.find(z=>z.unlocked);
+    if(h){h.fish.push(makeFish("minnow","base",0));log("研究所补给了一条玻璃小鱲","wn");dirty.stock=1;}
+  }
+  for(const g of GOALS)if(!S.goals[g.id]&&g.chk(S)){
+    S.goals[g.id]=1;S.data+=18;log("达成「"+g.nm+"」 +18 数据","gd");dirty.lab=1;
+  }
+}
+function rollEvent(){
+  const open=S.tanks.filter(t=>t.unlocked&&t.fish.length);
+  if(!open.length)return;
+  const t=pick(open);
+  const safe=S.age<600||S.bub<300||!allFish(S).some(f=>f.stage===2);
+  const kinds=safe?["bloom","bloom"]:["ich","bloom","hypox","bloom"];
+  if(!safe&&!S.res.heater)kinds.push("surge");
+  const k=pick(kinds);
+  if(k==="ich")S.ev={k,tk:t.i,t:600,txt:(t.i+1)+"号缸 白点病 · 健康持续下降"};
+  if(k==="bloom"){S.ev={k,tk:t.i,t:180,txt:(t.i+1)+"号缸 藻华 · 饵料回补"};t.plant=clamp(t.plant+45,0,100);}
+  if(k==="hypox")S.ev={k,tk:t.i,t:150,txt:(t.i+1)+"号缸 水质骤降 −12"};
+  if(k==="surge")S.ev={k,tk:t.i,t:150,txt:(t.i+1)+"号缸 温度失控漂移"};
+  log(S.ev.txt,k==="bloom"?"gd":"wn");dirty.ev=1;
+}
+const ichCost=()=>Math.max(30,Math.min(240,Math.floor(S.bub*.30)));
+function eventAction(){
+  if(!S.ev)return;
+  if(S.ev.k==="ich"){
+    if(!S.res.medbay){const c=ichCost();if(S.bub<c)return;S.bub-=c;}
+    log("白点病已治疗","gd");
+  }
+  S.ev=null;S.evCd=rnd(300,560);dirty.ev=1;
+}
+
+/* ===================== expedition engine ===================== */
+function zoneOpen(k){
+  const z=ZONES[k];
+  if(!z.need)return true;
+  if(z.need==="exped3")return S.stats.exped>=3;
+  if(z.need==="sonar")return !!S.res.sonar;
+  if(z.need==="legacy")return PERK("deeper");
+  return true;
+}
+function maxDepth(k){return ZONES[k].maxD+(PERK("deeper")?2:0);}
+function crewFish(){const t=tank();return S.crew.map(u=>t.fish.find(f=>f.u===u)).filter(Boolean);}
+function o2Cost(d,crew){
+  const z=ZONES[d.zone];
+  let c=z.o2+d.depth*1.1;
+  const h=crew.reduce((a,f)=>a+f.g.h,0)/Math.max(1,crew.length);
+  c*=1-clamp(h*.05,0,.3);
+  c*=1-clamp(crew.reduce((a,f)=>a+xpTier(f),0)*.03,0,.2);
+  if(S.res.sonar)c*=.8;
+  if(REL("charm"))c*=.85;
+  return Math.max(3,c);
+}
+function startDive(zk){
+  const z=ZONES[zk];
+  if(!z||!zoneOpen(zk)||S.dives.length>=diveCap())return;
+  if(S.bub<z.cost)return;
+  const t=tank(),crew=crewFish().filter(f=>f.stage===2&&!f.lk);
+  if(!crew.length)return;
+  if(allFish(S).length-crew.length<1){log("至少要留一条鱼看家","wn");return;}
+  S.bub-=z.cost;
+  for(const f of crew)t.fish.splice(t.fish.indexOf(f),1);
+  S.crew=[];
+  const vAvg=crew.reduce((a,f)=>a+f.g.v,0)/crew.length;
+  const haul=clamp(.58+vAvg*.48,.62,2.2);
+  S.dives.push({id:uid++,zone:zk,crew,tk:t.i,depth:0,haul,
+    o2:100+(PERK("o2tank")?25:0),o2max:100+(PERK("o2tank")?25:0),
+    stage:{t:z.stage,tot:z.stage},pending:null,logs:[],
+    cargo:{bub:0,cry:0,data:0,eggs:[],relic:null,species:null}});
+  log("远征启程 · "+z.nm+"（"+crew.length+" 名队员，采集效率 ×"+haul.toFixed(2)+"）");
+  dirty.exp=dirty.stock=dirty.breed=1;
+}
+function encWeights(d){
+  const w=[];
+  for(const k of EKEYS){
+    let x=ENC[k].w(d.depth);
+    if(REL("compass")&&["vein","crys","relic","fauna","cache","calm"].indexOf(k)>=0)x*=1.3;
+    w.push([k,x]);
+  }
+  return w;
+}
+function rollEnc(d){
+  const w=encWeights(d);
+  let tot=0;for(const p of w)tot+=p[1];
+  let r=Math.random()*tot;
+  for(const p of w){r-=p[1];if(r<=0)return p[0];}
+  return "vein";
+}
+function applyEnc(d,k){
+  const z=ZONES[d.zone],dep=d.depth,scale=(1+dep*.55)*(d.haul||1);
+  const e=ENC[k];
+  let txt="",gain="",loss="";
+  if(k==="vein"){const v=Math.floor(rnd(z.pay[0],z.pay[1])*scale*.5);d.cargo.bub+=v;gain="+"+fmt(v)+" 泡";}
+  else if(k==="crys"){const v=Math.max(1,Math.floor((1+dep*.75)*rnd(.9,1.5)));d.cargo.cry+=v;gain="+"+v+" 结晶";}
+  else if(k==="data"){const v=Math.floor(rnd(8,18)*scale*.6);d.cargo.data+=v;gain="+"+v+" 数据";}
+  else if(k==="egg"){
+    /* shallow water yields ordinary stock; the good genes live deep */
+    const tcap=Math.min(5,1+Math.floor(dep/2));
+    const pool=SKEYS.filter(s=>(!SPECIES[s].find||S.disc[s])
+      &&SPECIES[s].tier<=tcap&&(SPECIES[s].tier<4||S.res.manifest));
+    const sp=pick(pool.length?pool:["minnow"]);
+    let mo="base";
+    if(Math.random()<clamp(dep*.035-.03,0,.55))
+      mo=(dep>=6&&Math.random()<.20)?"aurora":"irid";
+    d.cargo.eggs.push({sp,mo,g:{v:clamp(rnd(.90,1.00+dep*.055),.5,2.0),
+      h:clamp(rnd(.2,.6+dep*.14),0,7),f:clamp(rnd(.84,1.02),.45,1.7)}});
+    gain=SPECIES[sp].nm+"·"+MORPH[mo].nm+" 卵";
+  }
+  else if(k==="relic"){
+    const left=RLKEYS.filter(x=>!S.relics[x]&&!(d.cargo.relic===x));
+    if(left.length&&!d.cargo.relic){d.cargo.relic=pick(left);gain=RELICS[d.cargo.relic].nm;}
+    else{const v=Math.floor(rnd(z.pay[0],z.pay[1])*scale*.4);d.cargo.bub+=v;gain="残片换算 +"+fmt(v)+" 泡";}
+  }
+  else if(k==="fauna"){
+    const und=SKEYS.filter(x=>SPECIES[x].find&&!S.disc[x]&&SPECIES[x].tier<=2+Math.floor(dep/3));
+    if(und.length&&!d.cargo.species){d.cargo.species=pick(und);gain="发现 "+SPECIES[d.cargo.species].nm;}
+    else{const v=Math.max(1,Math.floor(dep*.8));d.cargo.cry+=v;gain="标本记录 +"+v+" 结晶";}
+  }
+  else if(k==="current"){const v=Math.floor(rnd(8,16));d.o2=clamp(d.o2-v,0,d.o2max);loss="−"+v+" 氧气";}
+  else if(k==="calm"){const v=Math.floor(rnd(8,15));d.o2=clamp(d.o2+v,0,d.o2max);gain="+"+v+" 氧气";}
+  else if(k==="cache"){
+    const v=Math.floor(rnd(z.pay[0],z.pay[1])*scale*1.1),c=Math.max(1,Math.floor(dep*.7));
+    d.cargo.bub+=v;d.cargo.cry+=c;gain="+"+fmt(v)+" 泡 +"+c+" 结晶";
+  }
+  else if(k==="pred"){
+    const victim=pick(d.crew);
+    const esc=clamp(.55+victim.g.h*.07+xpTier(victim)*.08,.3,.95);
+    if(Math.random()<esc){const v=Math.floor(rnd(5,12));d.o2=clamp(d.o2-v,0,d.o2max);loss="甩脱追击 −"+v+" 氧气";}
+    else{
+      d.crew.splice(d.crew.indexOf(victim),1);S.stats.lost++;
+      if(!d.lostNames)d.lostNames=[];
+      d.lostNames.push(fishName(victim));
+      loss=fishName(victim)+" 失踪";
+      if(!d.crew.length){loss+=" · 全队覆没";}
+    }
+  }
+  txt=e.ico+" "+e.nm;
+  d.logs.push({d:dep,txt,gain,loss});
+  return {txt,gain,loss};
+}
+function diveTick(dt){
+  for(let i=S.dives.length-1;i>=0;i--){
+    const d=S.dives[i];
+    if(!d.crew.length){bankDive(d,"全队失踪");continue;}
+    if(d.pending)continue;
+    d.stage.t-=dt;
+    if(d.stage.t>0)continue;
+    const cost=o2Cost(d,d.crew);
+    d.depth++;
+    d.o2=clamp(d.o2-cost,0,d.o2max);
+    if(d.depth>S.stats.maxDepth)S.stats.maxDepth=d.depth;
+    applyEnc(d,rollEnc(d));
+    if(!d.crew.length){bankDive(d,"全队失踪");continue;}
+    const z=ZONES[d.zone];
+    if(d.o2<=0){bankDive(d,"氧气耗尽，紧急上浮");continue;}
+    if(d.depth>=maxDepth(d.zone)){d.pending="floor";}
+    else if(d.o2<o2Cost(d,d.crew)){d.pending="lowo2";}
+    else d.pending="choice";
+    dirty.exp=1;
+  }
+}
+function diveDecide(id,go){
+  const d=S.dives.find(x=>x.id===id);
+  if(!d||!d.pending)return;
+  if(!go){bankDive(d,"顺利返航");return;}
+  if(d.pending==="floor"||d.o2<o2Cost(d,d.crew)){bankDive(d,"顺利返航");return;}
+  d.pending=null;
+  d.stage.t=d.stage.tot=ZONES[d.zone].stage;
+  dirty.exp=1;
+}
+function bankDive(d,why){
+  const idx=S.dives.indexOf(d);if(idx>=0)S.dives.splice(idx,1);
+  const forced=/耗尽|覆没|失踪/.test(why);
+  const keep=forced?.65:1;
+  const rep={id:uid++,zone:d.zone,depth:d.depth,why,forced,
+    bub:Math.floor(d.cargo.bub*keep),cry:Math.floor(d.cargo.cry*keep),
+    data:Math.floor(d.cargo.data*keep),eggs:0,relic:null,species:null,
+    back:[],lost:(d.lostNames||[]).slice(),promoted:[],logs:d.logs};
+  if(d.depth>0&&d.crew.length){
+    const zf=ZONES[d.zone].maxD>=9?1.1:.8;
+    rep.depthBonus=Math.floor(Math.pow(d.depth,1.3)*zf);
+    rep.cry+=rep.depthBonus;
+  }
+  S.bub+=rep.bub;S.data+=rep.data;
+  if(rep.cry)gainCry(rep.cry);
+  if(!forced||Math.random()<.5){
+    if(d.cargo.relic&&!S.relics[d.cargo.relic]){S.relics[d.cargo.relic]=1;rep.relic=RELICS[d.cargo.relic].nm;}
+    if(d.cargo.species&&!S.disc[d.cargo.species]){S.disc[d.cargo.species]=1;rep.species=SPECIES[d.cargo.species].nm;}
+  }
+  for(const e of d.cargo.eggs){
+    const home=S.tanks.find(z=>z.unlocked&&z.eggs.length<eggCap());
+    if(!home)break;
+    const t=hatchTime();
+    home.eggs.push({sp:e.sp,mo:e.mo,g:e.g,gen:1,t,tot:t});rep.eggs++;
+  }
+  for(const f of d.crew){
+    const before=xpTier(f);f.xp=(f.xp||0)+1;
+    if(xpTier(f)>before)rep.promoted.push(fishName(f)+" → "+xpName(f));
+    placeFish(f,d.tk);rep.back.push(fishName(f));
+  }
+  if(d.depth>0){S.stats.exped++;if(d.depth>=4)S.stats.deepDive++;}
+  S.reports.unshift(rep);
+  if(S.reports.length>3)S.reports.length=3;
+  log("远征结束 · "+ZONES[d.zone].nm+" 深度 "+d.depth+" — "+why,forced?"wn":"gd");
+  dirty.exp=dirty.stock=dirty.breed=dirty.lab=1;
+}
+
+/* ===================== projects ===================== */
+function offerProject(){
+  const avail=PROJECTS.filter(p=>!S.proj.done[p.id]&&!S.proj.active.some(a=>a.id===p.id));
+  if(!avail.length)return;
+  const p=pick(avail);
+  S.proj.active.push({id:p.id,stage:0,timer:0});
+  log("新科研项目 · "+p.nm);
+  dirty.proj=1;
+}
+const projDef=id=>PROJECTS.find(p=>p.id===id);
+function projTick(dt){
+  S.proj.cd-=dt;
+  if(S.proj.cd<=0){S.proj.cd=rnd(420,720);if(S.proj.active.length<2)offerProject();}
+  for(const a of S.proj.active){
+    const def=projDef(a.id);if(!def)continue;
+    const st=def.stages[a.stage];if(!st)continue;
+    if(st.timed){
+      if(st.chk(S))a.timer=Math.min(st.timed,a.timer+dt);
+      else a.timer=Math.max(0,a.timer-dt*.5);
+      if(a.timer>=st.timed)advanceProj(a);
+    }else if(st.count){
+      if((S.stats[st.count.key]||0)-(a.base||0)>=st.count.need)advanceProj(a);
+      else if(a.base===undefined)a.base=S.stats[st.count.key]||0;
+    }else if(st.chk&&st.chk(S))advanceProj(a);
+  }
+}
+function advanceProj(a){
+  const def=projDef(a.id);
+  a.stage++;a.timer=0;a.base=undefined;
+  if(a.stage>=def.stages.length){
+    S.proj.active.splice(S.proj.active.indexOf(a),1);
+    S.proj.done[a.id]=1;S.stats.projects++;
+    const bonus=REL("ledger")?1.25:1;
+    gainCry(def.cry*bonus,"项目完成 · "+def.nm);
+    S.data+=def.data;
+    log("科研项目达成 <b>"+def.nm+"</b>  +"+def.data+" 数据","gd");
+  }else log("项目推进 · "+def.nm+" 阶段 "+(a.stage+1),"gd");
+  dirty.proj=1;
+}
+function deliverProj(aid){
+  const a=S.proj.active.find(x=>x.id===aid);if(!a)return;
+  const def=projDef(aid),st=def.stages[a.stage];
+  if(!st||!st.deliver)return;
+  const d=st.deliver,pool=allFish(S).filter(f=>!f.lk&&f.stage>=(d.stage||0)
+    &&(!d.morph||f.mo!=="base")&&(!d.minGen||f.gen>=d.minGen));
+  let use=[];
+  if(d.sameSp){
+    const by={};pool.forEach(f=>{(by[f.sp]=by[f.sp]||[]).push(f);});
+    for(const k in by)if(by[k].length>=d.count){use=by[k].slice(0,d.count);break;}
+  }else use=pool.slice(0,d.count);
+  if(use.length<d.count)return;
+  for(const f of use){
+    for(const t of S.tanks){const i=t.fish.indexOf(f);if(i>=0){t.fish.splice(i,1);break;}}
+    S.sel=S.sel.filter(x=>x!==f.u);
+  }
+  advanceProj(a);
+  dirty.stock=dirty.breed=1;
+}
+function canDeliver(a){
+  const def=projDef(a.id),st=def.stages[a.stage];
+  if(!st||!st.deliver)return false;
+  const d=st.deliver,pool=allFish(S).filter(f=>!f.lk&&f.stage>=(d.stage||0)
+    &&(!d.morph||f.mo!=="base")&&(!d.minGen||f.gen>=d.minGen));
+  if(d.sameSp){
+    const by={};pool.forEach(f=>{(by[f.sp]=by[f.sp]||[]).push(f);});
+    return Object.keys(by).some(k=>by[k].length>=d.count);
+  }
+  return pool.length>=d.count;
+}
+
+/* ===================== hall: VIP + judging ===================== */
+function hallTick(dt){
+  const h=S.hall;
+  if(h.vip){h.vip.t-=dt;if(h.vip.t<=0){log("贵宾离开了","wn");h.vip=null;h.vipCd=rnd(360,620);dirty.aqua=1;}}
+  else{h.vipCd-=dt*(REL("chime")?1.4:1);
+    if(h.vipCd<=0&&Object.keys(S.dex).length>=3){makeVip();h.vipCd=rnd(360,620);}}
+  if(h.judge){h.judge.t-=dt;if(h.judge.t<=0){h.judge=null;h.judgeCd=rnd(600,900);dirty.aqua=1;}}
+  else{h.judgeCd-=dt;if(h.judgeCd<=0&&allFish(S).some(f=>f.stage===2)){makeJudge();h.judgeCd=rnd(600,900);}}
+}
+function makeVip(){
+  const keys=Object.keys(S.dex);
+  const k=pick(keys),p=k.split(":");
+  S.hall.vip={sp:p[0],mo:p[1],t:rnd(900,1500),
+    cry:Math.floor((8+SPECIES[p[0]].tier*4)*(p[1]==="base"?1:p[1]==="irid"?1.7:2.6))};
+  log("贵宾来访 · 想看 "+SPECIES[p[0]].nm+"·"+MORPH[p[1]].nm,"cr");
+  dirty.aqua=1;
+}
+function vipSatisfied(){
+  const v=S.hall.vip;if(!v)return false;
+  return donated(v.sp,v.mo);
+}
+function claimVip(){
+  if(!vipSatisfied())return;
+  const v=S.hall.vip;
+  gainCry(v.cry*(REL("ledger")?1.25:1),"贵宾满意 · "+SPECIES[v.sp].nm);
+  S.stats.vip++;S.hall.vip=null;S.hall.vipCd=rnd(360,620);
+  dirty.aqua=1;
+}
+const FOCUS={v:"产出基因",h:"耐受基因",s:"综合星级"};
+function makeJudge(){
+  const live={};for(const f of allFish(S))if(f.stage===2)live[f.sp]=1;
+  const pool=Object.keys(live);if(!pool.length)return;
+  S.hall.judge={sp:pick(pool),focus:pick(["v","h","s"]),t:rnd(1500,2400)};
+  log("评审来访 · "+SPECIES[S.hall.judge.sp].nm+"组","cr");
+  dirty.aqua=1;
+}
+function judgeScore(f){
+  const j=S.hall.judge;
+  if(j.focus==="v")return clamp((f.g.v-.95)/1.05,0,1);
+  if(j.focus==="h")return clamp(f.g.h/4.5,0,1);
+  return clamp((stars(f)-1)/4,0,1);
+}
+function judgeEligible(){
+  const j=S.hall.judge;if(!j)return[];
+  return allFish(S).filter(f=>f.sp===j.sp&&f.stage===2);
+}
+function submitJudge(u){
+  const j=S.hall.judge;if(!j)return;
+  const f=allFish(S).find(x=>x.u===u);
+  if(!f||f.sp!==j.sp||f.stage<2)return;
+  const sc=judgeScore(f),scale=1+SPECIES[j.sp].tier*.4;
+  let tier,cry;
+  if(sc>=.80){tier="金奖";cry=Math.floor(26*scale);}
+  else if(sc>=.55){tier="银奖";cry=Math.floor(13*scale);}
+  else if(sc>=.28){tier="铜奖";cry=Math.floor(6*scale);}
+  else{tier="未入围";cry=1;}
+  gainCry(cry,"评审 "+tier+" · "+fishName(f));
+  S.stats.judge++;S.hall.judge=null;S.hall.judgeCd=rnd(600,900);
+  dirty.aqua=1;
+}
+/* ===================== actions ===================== */
+function fishCry(sp){
+  const t=SPECIES[sp].tier;
+  return t>=5?26:t>=4?12:t>=3?4:0;
+}
+function shopList(){
+  return SKEYS.filter(k=>{
+    const d=SPECIES[k];
+    if(d.find)return !!S.disc[k];
+    if(d.tier>=4&&!S.res.manifest)return false;
+    return true;
+  });
+}
+function fitTag(sp){
+  const t=tank(),d=SPECIES[sp],p=padBase();
+  const m=Math.min(fitBand(t.temp,d.temp,p),fitBand(effO2(t),d.o2,p*2));
+  if(m>=1)return'<span class="tag ok">当前适配</span>';
+  if(m>=.55)return'<span class="tag">需调水</span>';
+  return'<span class="tag hot">水质冲突</span>';
+}
+function buyFish(sp){
+  const d=SPECIES[sp],t=tank(),cc=fishCry(sp);
+  if(S.bub<d.cost||S.cry<cc||t.fish.length>=cap())return;
+  S.bub-=d.cost;if(cc)S.cry-=cc;
+  const f=makeFish(sp,"base",0);
+  const same=t.fish.filter(x=>x.sp===sp);
+  if(same.length===1)f.sex=same[0].sex==="F"?"M":"F";
+  t.fish.push(f);S.stats.bought++;recordDex(f);
+  log("购入 <b>"+fishName(f)+"</b> "+starStr(f));
+  dirty.stock=dirty.breed=1;
+}
+function sellFish(u){
+  const t=tank(),i=t.fish.findIndex(f=>f.u===u);if(i<0)return;
+  const f=t.fish[i];
+  if(f.lk)return;
+  const val=Math.floor(SPECIES[f.sp].cost*[.35,.55,.85][f.stage]*(1+MORPH[f.mo].bonus)*(.7+f.g.v*.4));
+  S.bub+=val;t.fish.splice(i,1);
+  S.sel=S.sel.filter(x=>x!==u);S.crew=S.crew.filter(x=>x!==u);
+  log("卖出 <b>"+fishName(f)+"</b>  +"+val);
+  dirty.stock=dirty.breed=dirty.aqua=1;
+}
+function moveFish(u,to){
+  const dst=S.tanks[to];
+  if(!dst||!dst.unlocked||dst.fish.length>=cap())return;
+  for(const t of S.tanks){
+    const i=t.fish.findIndex(f=>f.u===u);
+    if(i<0)continue;
+    if(t===dst)return;
+    const f=t.fish.splice(i,1)[0];
+    dst.fish.push(f);
+    S.sel=S.sel.filter(x=>x!==u);S.crew=S.crew.filter(x=>x!==u);
+    log("<b>"+fishName(f)+"</b> 移入 "+(to+1)+" 号缸");
+    dirty.stock=dirty.breed=dirty.exp=1;return;
+  }
+}
+function placeHeld(u,to){
+  const i=S.hold.findIndex(f=>f.u===u);if(i<0)return;
+  const dst=S.tanks[to];
+  if(!dst||!dst.unlocked||dst.fish.length>=cap())return;
+  dst.fish.push(S.hold.splice(i,1)[0]);
+  log("已安置到 "+(to+1)+" 号缸","gd");dirty.stock=dirty.breed=1;
+}
+function releaseHeld(u){
+  const i=S.hold.findIndex(f=>f.u===u);if(i<0)return;
+  const f=S.hold.splice(i,1)[0];
+  const val=Math.floor(SPECIES[f.sp].cost*[.35,.55,.85][f.stage]*(1+MORPH[f.mo].bonus));
+  S.bub+=val;log("放归 <b>"+fishName(f)+"</b>  +"+val);dirty.stock=1;
+}
+function feed(k){
+  const f=FOODS[k],t=tank();
+  if(S.bub<f.cost)return;
+  S.bub-=f.cost;
+  if(f.kind==="plant")t.plant=clamp(t.plant+f.add,0,100);else t.meat=clamp(t.meat+f.add,0,100);
+  t.waste=clamp(t.waste+f.add*f.mess,0,100);
+  dirty.tank=1;
+}
+function buyDecor(k){
+  const d=DECOR[k],t=tank();
+  if(t.decor[k]||S.bub<d.cost)return;
+  S.bub-=d.cost;t.decor[k]=1;
+  log("布置 <b>"+d.nm+"</b>（"+(t.i+1)+"号缸）");dirty.tank=dirty.aqua=1;
+}
+function sellDecor(k){
+  const t=tank();if(!t.decor[k])return;
+  delete t.decor[k];S.bub+=Math.floor(DECOR[k].cost*.5);
+  dirty.tank=dirty.aqua=1;
+}
+const HALLUP={
+  light :{nm:"展缸照明",nd:"美观 +6/级",base:1600},
+  guide :{nm:"导览讲解",nd:"评分 +5/级",base:2400},
+  ticket:{nm:"门票定价",nd:"门票收入 +60%/级",base:3600}
+};
+const hallUpCost=k=>Math.floor(HALLUP[k].base*Math.pow(1.75,S.hall.up[k]||0));
+function buyHallUp(k){
+  const c=hallUpCost(k);
+  if(S.bub<c)return;
+  S.bub-=c;S.hall.up[k]=(S.hall.up[k]||0)+1;
+  log("展馆升级 · "+HALLUP[k].nm+" Lv."+S.hall.up[k]);
+  dirty.aqua=1;
+}
+/* ---------- breeding + strains (registry & gene bank merged) ---------- */
+function toggleSel(u){
+  const i=S.sel.indexOf(u);
+  if(i>=0)S.sel.splice(i,1);else{S.sel.push(u);if(S.sel.length>2)S.sel.shift();}
+  dirty.breed=1;
+}
+function pairInfo(){
+  const t=tank();
+  const a=t.fish.find(f=>f.u===S.sel[0]),b=t.fish.find(f=>f.u===S.sel[1]);
+  if(!a||!b)return{ok:0,why:"选择同缸内两条成鱼"};
+  if(a.sp!==b.sp)return{ok:0,why:"必须是同一鱼种",a,b};
+  if(a.stage<2||b.stage<2)return{ok:0,why:"两条都必须是成鱼",a,b};
+  if(a.sex===b.sex)return{ok:0,why:"需要一雌一雄",a,b};
+  if(a.hp<70||b.hp<70)return{ok:0,why:"健康度需 ≥ 70",a,b};
+  if(comfort(a,t)<.7||comfort(b,t)<.7)return{ok:0,why:"适应度需 ≥ 70%",a,b};
+  if(a.cd>0||b.cd>0)return{ok:0,why:"冷却中 "+mmss(Math.max(a.cd,b.cd)),a,b};
+  if(t.eggs.length>=eggCap())return{ok:0,why:"孵化位已满",a,b};
+  return{ok:1,a,b};
+}
+function mixGene(a,b,key,lo,hi){
+  const sp=S.res.genetics?.08:.13;
+  let v=(a.g[key]+b.g[key])/2+(Math.random()+Math.random()+Math.random()-1.5)*sp;
+  if(Math.random()<(S.res.genetics?.35:.18))v+=(Math.random()<.5?-1:1)*rnd(.12,.34);
+  return clamp(v,lo,hi);
+}
+function breed(){
+  const p=pairInfo();if(!p.ok)return;
+  const t=tank(),a=p.a,b=p.b;
+  let mo=Math.random()<.5?a.mo:b.mo;
+  const mut=S.res.genetics?.30:.10;
+  if(Math.random()<mut)mo=Math.random()<(S.res.genetics?.22:.09)?"aurora":"irid";
+  let g={v:mixGene(a,b,"v",.5,2.0),h:mixGene(a,b,"h",0,7),f:mixGene(a,b,"f",.45,1.7)};
+  if(S.res.editor){
+    g.v=Math.max(g.v,Math.max(a.g.v,b.g.v));
+    g.h=Math.max(g.h,Math.max(a.g.h,b.g.h));
+    g.f=Math.min(g.f,Math.min(a.g.f,b.g.f));
+  }
+  const bk=S.strains[S.spliceSel];
+  if(bk&&S.data>=40){
+    S.data-=40;S.stats.spliced++;
+    g={v:clamp((g.v+bk.v)/2+rnd(-.03,.06),.5,2.0),
+       h:clamp((g.h+bk.h)/2+rnd(-.1,.2),0,7),
+       f:clamp((g.f+bk.f)/2+rnd(-.04,.03),.45,1.7)};
+    log("品系拼接 · "+SPECIES[bk.sp].nm+"（−40 数据）");
+  }
+  const tm=hatchTime();
+  t.eggs.push({sp:a.sp,mo,g,gen:Math.max(a.gen,b.gen)+1,t:tm,tot:tm});
+  const cd=75*((a.g.f+b.g.f)/2)*(t.decor.wreck?.8:1);
+  a.cd=cd;b.cd=cd;S.sel=[];
+  log("配对成功 — 产下 "+MORPH[mo].nm+" 卵","gd");
+  dirty.breed=1;
+}
+const strainScore=f=>f.g.v*1.0+clamp(f.g.h,0,6)*.16+(1.7-clamp(f.g.f,.45,1.7))*.42+MORPH[f.mo].bonus*.3;
+function canRegister(f){
+  if(f.stage<2)return false;
+  const c=S.strains[f.sp];
+  return c?strainScore(f)>c.score+.001:f.g.v>=1.20;
+}
+function registerStrain(u){
+  let src=null,tk=null;
+  for(const t of S.tanks){const i=t.fish.findIndex(f=>f.u===u);if(i>=0){src=t.fish[i];tk=t;break;}}
+  if(!src||!canRegister(src))return;
+  const first=!S.strains[src.sp];
+  S.strains[src.sp]={sp:src.sp,mo:src.mo,v:src.g.v,h:src.g.h,f:src.g.f,gen:src.gen,
+    stars:stars(src),score:strainScore(src)};
+  tk.fish.splice(tk.fish.indexOf(src),1);
+  S.sel=S.sel.filter(x=>x!==u);S.crew=S.crew.filter(x=>x!==u);
+  S.stats.registered++;
+  gainCry(4+SPECIES[src.sp].tier*3,(first?"新品系登记":"品系纪录刷新")+" · "+fishName(src));
+  S.data+=30;
+  dirty.lab=dirty.stock=dirty.breed=1;
+}
+/* ---------- research ---------- */
+function research(k){
+  const r=RESEARCH[k];
+  if(S.res[k]||(r.req&&!S.res[r.req]))return;
+  if(S.data<r.data||(r.cry&&S.cry<r.cry))return;
+  S.data-=r.data;if(r.cry)S.cry-=r.cry;
+  S.res[k]=1;
+  if(k==="tank2")S.tanks[1].unlocked=1;
+  if(k==="tank3")S.tanks[2].unlocked=1;
+  log("研究完成 <b>"+r.nm+"</b>","gd");
+  save();dirty.lab=dirty.pick=dirty.exp=1;
+}
+const theoryCost=()=>Math.floor(THEORY.base*Math.pow(THEORY.mul,S.theory));
+function buyTheory(){
+  const c=theoryCost();
+  if(S.data<c)return;
+  S.data-=c;S.theory++;
+  log("深渊理论 Lv."+S.theory+" — 全局产出 +"+Math.round(S.theory*THEORY.gain*100)+"%","gd");
+  dirty.lab=1;
+}
+/* ---------- hatchery: crystals only, price climbs ---------- */
+const HATCH={
+  elite:{nm:"精英卵",base:16,v:[1.25,1.50],h:[.6,2.0],mo:["base","base","irid"],nd:"产出基因 1.25–1.50"},
+  rare :{nm:"稀有卵",base:40,v:[1.45,1.70],h:[1.2,3.0],mo:["irid"],           nd:"必出虹彩，1.45–1.70"},
+  heir :{nm:"传承卵",base:95,v:[1.65,1.92],h:[2.0,4.4],mo:["irid","aurora"],  nd:"1.65–1.92，可能极光"}
+};
+const hatchCost=k=>Math.floor(HATCH[k].base*Math.pow(1.55,(S.hatchN&&S.hatchN[k])||0));
+function buyEgg(k){
+  const H=HATCH[k];if(!H||!S.res.hatchery)return;
+  const c=hatchCost(k);
+  if(S.cry<c)return;
+  const home=S.tanks.find(z=>z.unlocked&&z.eggs.length<eggCap());
+  if(!home){log("没有空的孵化位","wn");return;}
+  S.cry-=c;
+  if(!S.hatchN)S.hatchN={};
+  S.hatchN[k]=(S.hatchN[k]||0)+1;
+  const pool=Object.keys(S.dex).map(x=>x.split(":")[0]).filter(x=>SPECIES[x]);
+  const sp=pick(pool.length?pool:["minnow"]);
+  const t=hatchTime();
+  home.eggs.push({sp,mo:pick(H.mo),gen:1,t,tot:t,
+    g:{v:clamp(rnd(H.v[0],H.v[1]),.5,2.0),h:clamp(rnd(H.h[0],H.h[1]),0,7),f:clamp(rnd(.72,.95),.45,1.7)}});
+  log("苗场订购 <b>"+H.nm+"</b> · "+SPECIES[sp].nm,"cr");
+  dirty.aqua=dirty.breed=1;
+}
+/* ---------- legacy ---------- */
+/* collections survive a legacy reset, so they may only be cashed in once */
+function legacyProgress(){
+  return museumCount()*.7+Object.keys(S.dex).length*.25
+    +Object.keys(S.strains).length*1.1+Object.keys(S.relics).length*1.3+S.stats.maxDepth*.35;
+}
+function legacyGain(){
+  const fresh=Math.max(0,legacyProgress()-(S.legacy.claimedP||0));
+  /* only the part of the score that actually resets can be cashed in again */
+  const sc=hallScore();
+  return Math.floor(fresh+Math.pow(Math.max(0,sc.art+sc.guide),.62)/5.5);
+}
+const canLegacy=()=>hallStars(S)>=3&&legacyGain()>=3;
+function doLegacy(){
+  if(!canLegacy())return;
+  const gain=legacyGain();
+  const keep={pts:(S.legacy.pts||0)+gain,perks:S.legacy.perks||{},runs:(S.legacy.runs||0)+1,
+    claimedP:legacyProgress()};
+  const dex=S.dex,disc=S.disc,relics=S.relics,strains=S.strains,lg=S.log.slice(0,10);
+  const museum=S.museum,donatedN=S.stats.donated,setsN=S.stats.sets;
+  const maxD=S.stats.maxDepth,cryT=S.stats.cryTotal;
+  S=newState(keep);
+  S.dex=dex;S.disc=disc;S.relics=relics;S.strains=strains;S.log=lg;
+  S.museum=museum;S.stats.donated=donatedN;S.stats.sets=setsN;
+  S.stats.maxDepth=maxD;S.stats.cryTotal=cryT;
+  log("世代传承完成 — 获得 "+gain+" 传承点（累计 "+keep.pts+"）","cr");
+  dirty.pick=dirty.tank=dirty.stock=dirty.breed=dirty.exp=dirty.aqua=dirty.lab=1;
+  save(true);
+}
+function buyPerk(k){
+  const p=PERKS[k];
+  if(!p||S.legacy.perks[k])return;
+  if((S.legacy.pts||0)<p.cost)return;
+  S.legacy.pts-=p.cost;S.legacy.perks[k]=1;
+  if(k==="start2"&&!S.res.tank2){S.res.tank2=1;S.tanks[1].unlocked=1;}
+  log("传承特性 · "+p.nm,"cr");
+  dirty.lab=dirty.pick=1;save();
+}
+/* ===================== canvas ===================== */
+const cv=$("tank"),cx=cv.getContext("2d");
+let CW=380,CH=170,dpr=Math.min(2,window.devicePixelRatio||1);
+const bubbles=[];
+function resize(){
+  const w=cv.parentElement.clientWidth;
+  CW=w;CH=clamp(Math.round(w*.44),120,178);
+  cv.width=CW*dpr;cv.height=CH*dpr;cv.style.height=CH+"px";
+  cx.setTransform(dpr,0,0,dpr,0,0);
+}
+new ResizeObserver(resize).observe(cv.parentElement);
+resize();
+const dirOf=f=>f.dir===undefined?1:f.dir;
+const pitchOf=f=>(f.pitch||0)*(dirOf(f)<0?-1:1);
+function drawFish(f){
+  const L=fishLen(f)*(CW/360)*1.5,c=fishColor(f),d=SPECIES[f.sp];
+  const sw=Math.sin(f.ph*2)*.5;
+  cx.save();cx.translate(f.x*CW,f.y*CH);
+  const body=d.body||"fish";
+  if(body==="jelly"){
+    if(d.glow>0){cx.shadowColor=fishColor(f,.9);cx.shadowBlur=12*d.glow;}
+    cx.globalAlpha=.45+.4*(f.hp/100);
+    const p=1+Math.sin(f.ph*2.2)*.12;
+    cx.fillStyle=c;cx.beginPath();
+    cx.ellipse(0,0,L*.85*p,L*.72/p,0,Math.PI,TAU);
+    cx.lineTo(L*.85*p,L*.12);cx.quadraticCurveTo(0,L*.34,-L*.85*p,L*.12);
+    cx.closePath();cx.fill();
+    cx.globalAlpha*=.6;cx.strokeStyle=c;cx.lineWidth=Math.max(.7,L*.09);
+    for(let i=-2;i<=2;i++){const ox=i*L*.30;
+      cx.beginPath();cx.moveTo(ox,L*.16);
+      cx.quadraticCurveTo(ox+Math.sin(f.ph+i)*L*.3,L*1.0,ox+Math.sin(f.ph*1.3+i)*L*.5,L*1.7);cx.stroke();}
+    cx.restore();return;
+  }
+  if(body==="squid"){
+    cx.rotate(pitchOf(f));cx.scale(dirOf(f),1);cx.rotate(Math.PI/2);
+    if(d.glow>0){cx.shadowColor=fishColor(f,.9);cx.shadowBlur=11*d.glow;}
+    cx.globalAlpha=.55+.45*(f.hp/100);
+    cx.fillStyle=fishColor(f,.55);
+    cx.beginPath();cx.moveTo(-L*.5,-L*.15);cx.lineTo(0,-L*1.15);cx.lineTo(L*.5,-L*.15);cx.closePath();cx.fill();
+    cx.fillStyle=c;cx.beginPath();cx.ellipse(0,-L*.18,L*.42,L*.86,0,0,TAU);cx.fill();
+    cx.strokeStyle=c;cx.lineWidth=Math.max(.7,L*.11);
+    for(let i=-3;i<=3;i++){const ox=i*L*.11;
+      cx.beginPath();cx.moveTo(ox,L*.5);
+      cx.quadraticCurveTo(ox+Math.sin(f.ph*1.6+i)*L*.28,L*1.05,ox+Math.sin(f.ph*1.6+i)*L*.5,L*1.5);cx.stroke();}
+    cx.fillStyle="rgba(6,14,20,.8)";
+    cx.beginPath();cx.arc(-L*.18,L*.34,Math.max(.9,L*.12),0,TAU);cx.fill();
+    cx.beginPath();cx.arc(L*.18,L*.34,Math.max(.9,L*.12),0,TAU);cx.fill();
+    cx.restore();return;
+  }
+  if(body==="ray"){
+    cx.rotate(pitchOf(f));cx.scale(dirOf(f),1);
+    if(d.glow>0){cx.shadowColor=fishColor(f,.9);cx.shadowBlur=10*d.glow;}
+    cx.globalAlpha=.55+.45*(f.hp/100);
+    const fl=Math.sin(f.ph*1.7)*L*.34;
+    cx.fillStyle=c;cx.beginPath();cx.moveTo(L*.72,0);
+    cx.quadraticCurveTo(L*.1,-L*.5,-L*.85,-L*1.15-fl);
+    cx.quadraticCurveTo(-L*.5,-L*.2,-L*.62,0);
+    cx.quadraticCurveTo(-L*.5,L*.2,-L*.85,L*1.15+fl);
+    cx.quadraticCurveTo(L*.1,L*.5,L*.72,0);cx.closePath();cx.fill();
+    cx.strokeStyle=fishColor(f,.6);cx.lineWidth=Math.max(.8,L*.12);
+    cx.beginPath();cx.moveTo(-L*.6,0);
+    cx.quadraticCurveTo(-L*1.2,Math.sin(f.ph*2)*L*.2,-L*1.9,Math.sin(f.ph*2)*L*.4);cx.stroke();
+    cx.fillStyle="rgba(6,14,20,.75)";
+    cx.beginPath();cx.arc(L*.34,-L*.20,Math.max(.8,L*.09),0,TAU);cx.fill();
+    cx.beginPath();cx.arc(L*.34,L*.20,Math.max(.8,L*.09),0,TAU);cx.fill();
+    cx.restore();return;
+  }
+  if(body==="eel"){
+    cx.rotate(pitchOf(f));cx.scale(dirOf(f),1);
+    if(d.glow>0){cx.shadowColor=fishColor(f,.9);cx.shadowBlur=9*d.glow;}
+    cx.globalAlpha=.55+.45*(f.hp/100);
+    cx.strokeStyle=c;cx.lineCap="round";
+    const seg=9;
+    for(let i=seg;i>=0;i--){
+      const px=L*1.15-i*(L*2.1/seg);
+      const py=Math.sin(f.ph*2.2+i*.75)*L*.42*(i/seg*.85+.15);
+      cx.lineWidth=Math.max(1,L*.44*(1-i/seg*.72));
+      if(i===seg){cx.beginPath();cx.moveTo(px,py);}else cx.lineTo(px,py);
+    }
+    cx.stroke();
+    cx.fillStyle=c;cx.beginPath();cx.ellipse(L*1.15,Math.sin(f.ph*2.2)*L*.06,L*.32,L*.24,0,0,TAU);cx.fill();
+    cx.fillStyle="rgba(6,14,20,.85)";
+    cx.beginPath();cx.arc(L*1.24,-L*.07,Math.max(.8,L*.07),0,TAU);cx.fill();
+    cx.restore();return;
+  }
+  if(body==="angler"){
+    cx.rotate(pitchOf(f));cx.scale(dirOf(f),1);
+    cx.globalAlpha=.55+.45*(f.hp/100);
+    cx.fillStyle=fishColor(f,.5);
+    cx.beginPath();cx.moveTo(-L*.6,0);cx.lineTo(-L*1.3,-L*.5);cx.lineTo(-L*1.12,0);
+    cx.lineTo(-L*1.3,L*.5);cx.closePath();cx.fill();
+    cx.fillStyle=c;cx.beginPath();cx.ellipse(0,0,L*.98,L*.80,0,0,TAU);cx.fill();
+    cx.fillStyle=fishColor(f,.85);
+    cx.beginPath();cx.moveTo(L*.15,L*.30);cx.lineTo(L*.95,L*.10);cx.lineTo(L*.9,L*.52);cx.closePath();cx.fill();
+    cx.fillStyle="#fdf6e0";
+    for(let i=0;i<5;i++){const tx=L*(.28+i*.14);
+      cx.beginPath();cx.moveTo(tx,L*.26);cx.lineTo(tx+L*.05,L*.05);cx.lineTo(tx+L*.11,L*.26);cx.closePath();cx.fill();}
+    cx.strokeStyle=fishColor(f,.8);cx.lineWidth=Math.max(.8,L*.07);
+    const lx=L*(.55+Math.sin(f.ph)*.10),ly=-L*(1.25+Math.cos(f.ph)*.10);
+    cx.beginPath();cx.moveTo(L*.1,-L*.62);cx.quadraticCurveTo(L*.5,-L*1.15,lx,ly);cx.stroke();
+    cx.save();cx.shadowColor="#ffe9a8";cx.shadowBlur=14;cx.fillStyle="#fff3c4";
+    cx.beginPath();cx.arc(lx,ly,Math.max(1.4,L*.17),0,TAU);cx.fill();cx.restore();
+    cx.fillStyle="rgba(6,14,20,.9)";
+    cx.beginPath();cx.arc(L*.44,-L*.26,Math.max(1,L*.12),0,TAU);cx.fill();
+    cx.restore();return;
+  }
+  cx.rotate(pitchOf(f)+Math.sin(f.ph)*.035);cx.scale(dirOf(f),1);
+  if(d.glow>0){cx.shadowColor=fishColor(f,.9);cx.shadowBlur=10*d.glow;}
+  cx.globalAlpha=.55+.45*(f.hp/100);
+  let bw=1.0,bh=.36,tail=1.0,dor=1.0;
+  if(body==="disc"){bw=.82;bh=.86;tail=.75;dor=1.7;}
+  else if(body==="torpedo"){bw=1.28;bh=.26;tail=1.05;dor=.8;}
+  else if(body==="bottom"){bw=1.05;bh=.30;tail=.8;dor=.55;}
+  else if(body==="lantern"){bw=.92;bh=.52;tail=.85;dor=.9;}
+  else if(body==="levi"){bw=1.42;bh=.46;tail=1.15;dor=.7;}
+  cx.fillStyle=fishColor(f,.55);
+  cx.beginPath();cx.moveTo(-L*bw*.72,0);
+  cx.lineTo(-L*bw*(.72+.5*tail),-L*.45*tail+sw*L*.1);
+  cx.lineTo(-L*bw*(.72+.34*tail),0);
+  cx.lineTo(-L*bw*(.72+.5*tail),L*.45*tail+sw*L*.1);
+  cx.closePath();cx.fill();
+  cx.fillStyle=fishColor(f,.42);
+  cx.beginPath();cx.moveTo(-L*.12,-L*bh*.85);
+  cx.quadraticCurveTo(L*.02,-L*bh*(1+1.1*dor),L*.42,-L*bh*.7);cx.closePath();cx.fill();
+  cx.beginPath();cx.moveTo(L*.05,L*bh*.5);
+  cx.quadraticCurveTo(L*.1,L*bh*(1+.9*dor),L*.48,L*bh*.45);cx.closePath();cx.fill();
+  cx.fillStyle=c;cx.beginPath();cx.ellipse(0,0,L*bw,L*bh,0,0,TAU);cx.fill();
+  cx.globalAlpha*=.30;cx.fillStyle="#ffffff";
+  cx.beginPath();cx.ellipse(L*.04,L*bh*.34,L*bw*.74,L*bh*.36,0,0,TAU);cx.fill();
+  cx.globalAlpha=.55+.45*(f.hp/100);cx.shadowBlur=0;
+  if(body==="levi"){
+    cx.strokeStyle=fishColor(f,.5);cx.lineWidth=Math.max(.8,L*.05);
+    cx.beginPath();cx.moveTo(L*bw*.35,L*bh*.30);
+    cx.quadraticCurveTo(L*bw*.75,L*bh*.42,L*bw*.94,L*bh*.10);cx.stroke();
+  }
+  if(body==="bottom"){
+    cx.strokeStyle=fishColor(f,.6);cx.lineWidth=Math.max(.6,L*.05);
+    for(let i=0;i<2;i++){cx.beginPath();cx.moveTo(L*bw*.85,L*bh*.2);
+      cx.quadraticCurveTo(L*bw*1.05,L*bh*(.6+i*.35),L*bw*1.18,L*bh*(1+i*.5));cx.stroke();}
+  }
+  const er=Math.max(.9,L*.11);
+  cx.fillStyle="#ffffff";cx.beginPath();cx.arc(L*bw*.58,-L*bh*.30,er,0,TAU);cx.fill();
+  cx.fillStyle="rgba(4,10,14,.9)";cx.beginPath();cx.arc(L*bw*.62,-L*bh*.30,er*.58,0,TAU);cx.fill();
+  cx.restore();
+}
+/* ---------- decor ---------- */
+const DECORDRAW={
+  kelp(t){cx.strokeStyle="rgba(80,150,110,.55)";cx.lineWidth=2.5;
+    for(let i=0;i<7;i++){const x=6+i*12,ph=Date.now()/900+i;
+      cx.beginPath();cx.moveTo(x,CH);
+      for(let s=1;s<=4;s++)cx.lineTo(x+Math.sin(ph+s*.7)*5,CH-s*(CH*.16));cx.stroke();}},
+  pots(){cx.fillStyle="rgba(120,78,54,.85)";
+    for(let i=0;i<3;i++){const x=CW*.16+i*17,h=9+i%2*4;
+      cx.beginPath();cx.ellipse(x,CH-h*.5,7,h*.5,i*.5,0,TAU);cx.fill();
+      cx.fillStyle="rgba(20,14,10,.6)";cx.beginPath();cx.ellipse(x-2,CH-h*.75,2.6,1.6,0,0,TAU);cx.fill();
+      cx.fillStyle="rgba(120,78,54,.85)";}},
+  rock(){cx.fillStyle="rgba(46,54,60,.95)";
+    for(let i=0;i<3;i++){const x=CW*.72+i*13,h=16+i%2*13;
+      cx.beginPath();cx.moveTo(x-6,CH);cx.lineTo(x-4,CH-h);cx.lineTo(x+3,CH-h-3);
+      cx.lineTo(x+6,CH);cx.closePath();cx.fill();}},
+  anchor(){const x=CW*.42,y=CH-6;
+    cx.strokeStyle="rgba(96,104,110,.9)";cx.lineWidth=2.4;
+    cx.beginPath();cx.moveTo(x,y);cx.lineTo(x,y-22);cx.stroke();
+    cx.beginPath();cx.moveTo(x-8,y-17);cx.lineTo(x+8,y-17);cx.stroke();
+    cx.beginPath();cx.arc(x,y-3,8,Math.PI*.15,Math.PI*.85);cx.stroke();
+    cx.beginPath();cx.arc(x,y-24,3,0,TAU);cx.stroke();},
+  clam(){const x=CW*.60,y=CH-4;
+    cx.fillStyle="rgba(150,160,175,.9)";
+    cx.beginPath();cx.ellipse(x,y,13,9,0,Math.PI,TAU);cx.fill();
+    cx.fillStyle="rgba(190,205,220,.75)";
+    cx.beginPath();cx.ellipse(x,y-1,13,4+Math.sin(Date.now()/1400)*2.5,0,Math.PI,TAU);cx.fill();
+    cx.save();cx.shadowColor="#ffe9a8";cx.shadowBlur=9;cx.fillStyle="#fff3c4";
+    cx.beginPath();cx.arc(x,y-4,2,0,TAU);cx.fill();cx.restore();},
+  wreck(){cx.fillStyle="rgba(48,42,36,.9)";
+    cx.beginPath();cx.moveTo(CW*.62,CH);cx.lineTo(CW*.70,CH-25);cx.lineTo(CW*.93,CH-17);
+    cx.lineTo(CW*.96,CH);cx.closePath();cx.fill();
+    cx.strokeStyle="rgba(20,18,16,.9)";cx.lineWidth=1;cx.stroke();
+    cx.strokeStyle="rgba(70,62,52,.9)";cx.lineWidth=2;
+    cx.beginPath();cx.moveTo(CW*.74,CH-22);cx.lineTo(CW*.76,CH-38);cx.stroke();},
+  orb(){for(let i=0;i<3;i++){
+      const x=CW*.24+i*20,y=CH*.30+Math.sin(Date.now()/1200+i)*7;
+      cx.save();cx.globalAlpha=.5;cx.fillStyle="rgba(180,225,235,.6)";
+      cx.beginPath();cx.arc(x,y,6,0,TAU);cx.fill();
+      cx.strokeStyle="rgba(220,245,250,.7)";cx.lineWidth=1;cx.stroke();
+      cx.fillStyle="rgba(255,255,255,.8)";cx.beginPath();cx.arc(x-2,y-2,1.4,0,TAU);cx.fill();cx.restore();}},
+  coral(){for(let i=0;i<5;i++){
+      const x=CW*.30+i*10,h=10+(i%3)*7;
+      cx.save();cx.shadowColor="rgba(255,140,190,.85)";cx.shadowBlur=10;
+      cx.strokeStyle="rgba(255,150,190,.75)";cx.lineWidth=2.2;
+      cx.beginPath();cx.moveTo(x,CH);cx.lineTo(x+3,CH-h);cx.stroke();
+      cx.beginPath();cx.moveTo(x+3,CH-h*.6);cx.lineTo(x+8,CH-h*.9);cx.stroke();cx.restore();}},
+  vent(){const x=CW*.86;
+    cx.fillStyle="rgba(38,30,28,.95)";
+    cx.beginPath();cx.moveTo(x-11,CH);cx.lineTo(x-5,CH-16);cx.lineTo(x+5,CH-16);cx.lineTo(x+11,CH);
+    cx.closePath();cx.fill();
+    cx.save();cx.globalAlpha=.34;cx.fillStyle="#d8c8b8";
+    for(let i=0;i<4;i++){
+      const p=((Date.now()/28+i*40)%CH);
+      cx.beginPath();cx.arc(x+Math.sin(p*.06+i)*5,CH-16-p*.55,2.5+p*.03,0,TAU);cx.fill();}
+    cx.restore();
+    cx.save();cx.shadowColor="#ff7a3a";cx.shadowBlur=12;cx.fillStyle="rgba(255,140,70,.8)";
+    cx.beginPath();cx.ellipse(x,CH-16,5,2,0,0,TAU);cx.fill();cx.restore();},
+  bones(){const x=CW*.34,y=CH-3;
+    cx.strokeStyle="rgba(226,222,208,.75)";cx.lineWidth=2.6;
+    cx.beginPath();cx.moveTo(x-26,y-4);cx.quadraticCurveTo(x,y-20,x+30,y-6);cx.stroke();
+    cx.lineWidth=1.6;
+    for(let i=0;i<8;i++){
+      const p=i/7,bx=x-26+p*56,by=y-4-Math.sin(p*Math.PI)*15;
+      cx.beginPath();cx.moveTo(bx,by);cx.lineTo(bx-2,by+9+Math.sin(p*3)*3);cx.stroke();}
+    cx.lineWidth=2.2;
+    cx.beginPath();cx.ellipse(x-30,y-6,7,5,-.3,0,TAU);cx.stroke();}
+};
+function render(){
+  const t=tank();
+  const g=cx.createLinearGradient(0,0,0,CH),chill=clamp((t.temp-4)/26,0,1);
+  g.addColorStop(0,"hsl("+(196-chill*14)+" 46% "+(9+chill*4)+"%)");
+  g.addColorStop(1,"hsl("+(208-chill*10)+" 52% 4%)");
+  cx.fillStyle=g;cx.fillRect(0,0,CW,CH);
+  cx.save();cx.globalAlpha=.05+(S.res.lightA?.06:0)+(S.hall.up.light||0)*.012;
+  for(let i=0;i<3;i++){cx.fillStyle="#cfeef7";cx.beginPath();
+    const x=CW*(.2+i*.3);
+    cx.moveTo(x-8,0);cx.lineTo(x+8,0);cx.lineTo(x+26,CH);cx.lineTo(x-2,CH);cx.closePath();cx.fill();}
+  cx.restore();
+  for(const k of DKEYS)if(t.decor[k]&&DECORDRAW[k]){cx.save();DECORDRAW[k](t);cx.restore();}
+  cx.fillStyle="rgba(6,14,18,.9)";
+  cx.beginPath();cx.moveTo(0,CH);cx.lineTo(0,CH-5);
+  for(let x=0;x<=CW;x+=18)cx.lineTo(x,CH-5-Math.sin(x*.09)*2.5);
+  cx.lineTo(CW,CH);cx.closePath();cx.fill();
+  t.eggs.forEach((e,i)=>{
+    const x=CW*.06+i*12,y=CH-13,pr=1-e.t/e.tot;
+    cx.fillStyle="rgba(220,240,245,"+(.28+pr*.55)+")";
+    cx.beginPath();cx.arc(x,y,3.4,0,TAU);cx.fill();});
+  for(const f of t.fish)drawFish(f);
+  for(const b of bubbles){cx.fillStyle="rgba(190,230,240,"+b.a+")";
+    cx.beginPath();cx.arc(b.x,b.y,b.r,0,TAU);cx.fill();}
+  if(t.waste>8){cx.fillStyle="rgba(94,84,40,"+clamp(t.waste/260,0,.42)+")";cx.fillRect(0,0,CW,CH);}
+  cx.strokeStyle="rgba(255,255,255,.05)";cx.lineWidth=1;cx.strokeRect(.5,.5,CW-1,CH-1);
+}
+function animate(dt){
+  const t=tank();
+  for(const f of t.fish){
+    if(f.dir===undefined){f.dir=Math.random()<.5?-1:1;f.ty=f.y;f.turn=rnd(.5,4);f.pitch=0;}
+    f.turn-=dt;
+    if(f.turn<=0){f.turn=rnd(2.6,7.5);
+      if(Math.random()<.42)f.dir*=-1;
+      f.ty=clamp(f.y+rnd(-.26,.26),.15,.87);}
+    const spd=.052*f.sp2*(26/Math.max(19,fishLen(f)*1.9))*(.45+f.hp/180);
+    f.x+=f.dir*spd*dt;
+    if(f.x<.06){f.x=.06;f.dir=1;f.turn=Math.max(f.turn,1.2);}
+    if(f.x>.94){f.x=.94;f.dir=-1;f.turn=Math.max(f.turn,1.2);}
+    const vy=clamp((f.ty-f.y)*.55,-.05,.05);
+    f.ph+=dt*(2.0+spd*9);
+    f.y=clamp(f.y+vy*dt+Math.sin(f.ph)*.0035*dt,.13,.89);
+    const want=clamp(Math.atan2(vy,Math.max(spd,.02))*.55,-.30,.30);
+    f.pitch=lerp(f.pitch||0,want,1-Math.exp(-2.6*dt));
+  }
+  if(Math.random()<.18*t.fish.length*dt)
+    bubbles.push({x:rnd(6,CW-6),y:CH-6,r:rnd(.8,2.1),a:rnd(.15,.4),v:rnd(.16,.42)});
+  for(let i=bubbles.length-1;i>=0;i--){
+    const b=bubbles[i];b.y-=b.v*dt*60;b.x+=Math.sin(b.y*.08)*.22;
+    if(b.y<-4)bubbles.splice(i,1);}
+}
+/* ===================== ui ===================== */
+const dirty={pick:1,tank:1,stock:1,breed:1,exp:1,aqua:1,lab:1,log:1,ev:1,proj:1,journal:1};
+let TAB="tank",holding=false,sigs={};
+let ioText="",ioMsg="";
+function sigCheck(k,v){if(sigs[k]===v)return false;sigs[k]=v;return true;}
+function badge(tab,on,cls){
+  const b=document.querySelector('nav button[data-t="'+tab+'"]');
+  if(!b)return;
+  const has=b.querySelector("em");
+  if(on&&!has)b.insertAdjacentHTML("beforeend",'<em class="'+(cls||"")+'"></em>');
+  else if(on&&has)has.className=cls||"";
+  if(!on&&has)has.remove();
+}
+function renderPick(){
+  $("tankpick").innerHTML=S.tanks.map(t=>
+    '<button data-tk="'+t.i+'" class="'+(t.i===S.at?"on":"")+'" '+(t.unlocked?"":"disabled")+'>0'+(t.i+1)+"</button>").join("");
+}
+function renderWallet(){
+  $("wBub").textContent=fmt(S.bub);
+  $("wCry").textContent=fmt(S.cry);
+  $("wData").textContent=fmt(S.data);
+  $("wRate").innerHTML="+"+income().toFixed(2)+" 泡/秒<br>+"+dataRate().toFixed(3)+" 数据/秒";
+  badge("exp",S.dives.some(d=>d.pending)||S.reports.length>0,"");
+  badge("aqua",(!!S.hall.vip&&vipSatisfied())||(!!S.hall.judge&&judgeEligible().length>0),"cr");
+  badge("stock",S.hold.length>0,"");
+  badge("lab",S.proj.active.some(a=>canDeliver(a)),"");
+}
+function bandsFor(id,param,min,max){
+  const t=tank(),p=padBase(),off=param==="o2"?o2Pen(t):0;
+  const seen={};
+  for(const f of t.fish)if(!seen[f.sp]||f.g.h>seen[f.sp])seen[f.sp]=f.g.h;
+  const list=Object.keys(seen);
+  let html="",lo=-Infinity,hi=Infinity;
+  for(const sp of list){
+    const b=SPECIES[sp][param],pad=(p+seen[sp])*(param==="o2"?2:1);
+    const a=b[0]-pad+off,z=b[1]+pad+off;
+    lo=Math.max(lo,a);hi=Math.min(hi,z);
+    const l=((a-min)/(max-min))*100,w=((z-a)/(max-min))*100;
+    html+='<i style="left:'+clamp(l,0,100)+"%;width:"+clamp(w,0,100)+"%;background:"+fishColor({sp,mo:"base"},.30)+'"></i>';
+  }
+  if(list.length>1&&hi>lo){
+    const l=((lo-min)/(max-min))*100,w=((hi-lo)/(max-min))*100;
+    html+='<u style="left:'+clamp(l,0,100)+"%;width:"+clamp(w,0,100)+'%"></u>';
+  }
+  $(id).innerHTML=html;
+}
+function renderWater(force){
+  const t=tank();
+  const sig=t.i+"|"+t.fish.map(f=>f.sp+f.g.h.toFixed(1)).sort().join(",")+"|"+(S.res.heater?1:0)+Math.round(o2Pen(t));
+  if(force||sigCheck("bands",sig)){bandsFor("bTemp","temp",4,30);bandsFor("bO2","o2",30,100);}
+  const pairs=[["sTemp",t.temp],["sO2",t.o2]];
+  for(const p of pairs){const s=$(p[0]);if(document.activeElement!==s&&!s.dataset.drag)s.value=p[1];}
+  refreshThreat(t);
+  const tc=t.fish.length?t.fish.reduce((a,f)=>a+comfort(f,t),0)/t.fish.length:1;
+  $("vTemp").textContent=t.temp.toFixed(1)+" °C";
+  const eo=effO2(t),el=$("vO2");
+  el.textContent=Math.round(eo)+(o2Pen(t)>2?" ↓":"");
+  el.className="pv"+(eo<45?" bad":"");
+  $("legend").innerHTML=t.fish.length
+    ?'本缸适应度 <b style="color:'+(tc<.6?"var(--amber)":"var(--lume)")+'">'+Math.round(tc*100)+
+      "%</b> · 色带＝各鱼种舒适区，污染与密度会把水质色带右推"
+    :"缸内还没有鱼。到「鱼群」页买第一条。";
+}
+function renderEvent(){
+  const e=S.ev,box=$("event");
+  if(!e){box.className="";return;}
+  box.className="show";
+  $("etxt").textContent=e.txt+"  ["+mmss(e.t)+"]";
+  const b=$("ebtn");
+  if(e.k==="ich"){b.style.display="";b.textContent=S.res.medbay?"药浴治疗":"治疗 "+ichCost()+" 泡";}
+  else if(e.k==="hypox"){b.style.display="";b.textContent="手动补氧";}
+  else b.style.display="none";
+}
+const cdSecs=f=>Math.round(75*f.g.f);
+function fishIcon(sp,mo,size,dim){
+  const d=SPECIES[sp],c=fishColor({sp,mo:mo||"base"});
+  const b=d.body||"fish";
+  const w=size||22,h=Math.round(w*.68);
+  let p="";
+  if(b==="jelly")
+    p='<path d="M4 11a8 7 0 0 1 16 0c0 1.4-1.6 1.2-3 1.6-1.6.5-3.4.5-5 0-1.4-.4-3-.2-3-1.6z"/>'+
+      '<path d="M7.5 13c-.4 2 .6 3.2.2 4.6M12 13.4c-.3 2.2.7 3-.1 4.4M16.5 13c.4 2-.6 3.2-.2 4.6" '+
+      'stroke="'+c+'" stroke-width="1.1" fill="none" stroke-linecap="round"/>';
+  else if(b==="ray")
+    p='<path d="M21 9c-3-.6-5.5-4.2-9-4.6C8.6 4 5 6 3 9c2 3 5.6 5 9 4.6C15.5 13.2 18 9.6 21 9z"/>'+
+      '<path d="M21 9c1.5.4 3 1 4.5 2.2" stroke="'+c+'" stroke-width="1.1" fill="none" stroke-linecap="round"/>';
+  else if(b==="eel")
+    p='<path d="M2 11c3-3 4 2 7-1s4 2 7-1 4 1 6 .4" stroke="'+c+'" stroke-width="2.6" '+
+      'fill="none" stroke-linecap="round"/><circle cx="22" cy="8.6" r="2.1"/>';
+  else if(b==="squid")
+    p='<path d="M13 2c3 0 5 2.6 5 6.4 0 2.4-.8 4-1.4 4.6H9.4C8.8 12.4 8 10.8 8 8.4 8 4.6 10 2 13 2z"/>'+
+      '<path d="M10 13.4c-.4 2 .4 2.8 0 4.4M13 13.6c-.2 2 .4 2.8 0 4.4M16 13.4c.4 2-.4 2.8 0 4.4" '+
+      'stroke="'+c+'" stroke-width="1" fill="none" stroke-linecap="round"/>'+
+      '<path d="M18 6l4-3-1.4 5zM8 6L4 3l1.4 5z"/>';
+  else if(b==="angler")
+    p='<path d="M20 9c0 3.6-3.4 6.2-7.4 6.2S4 12.6 4 9 7.6 2.8 12.6 2.8 20 5.4 20 9z"/>'+
+      '<path d="M13 4.4C13.6 2 16 1.4 17.6 2.6" stroke="'+c+'" stroke-width="1" fill="none" stroke-linecap="round"/>'+
+      '<circle cx="18.4" cy="2.2" r="1.8" fill="#fff3c4"/>'+
+      '<path d="M8 10.6l1.4 2 1.4-2 1.4 2 1.4-2 1.4 2 1.2-2z" fill="#0b141b"/>';
+  else{
+    let bw=9,bh=5.2,tl=6;
+    if(b==="disc"){bw=7;bh=7;tl=5;}
+    else if(b==="torpedo"){bw=10.5;bh=3.4;tl=6.5;}
+    else if(b==="bottom"){bw=9.4;bh=4.2;tl=5.4;}
+    else if(b==="lantern"){bw=8;bh=6;tl=5.4;}
+    else if(b==="levi"){bw=11;bh=5.6;tl=7;}
+    const cxp=13,cyp=9;
+    p='<ellipse cx="'+cxp+'" cy="'+cyp+'" rx="'+bw+'" ry="'+bh+'"/>'+
+      '<path d="M'+(cxp-bw+.6)+' '+cyp+'L'+(cxp-bw-tl)+' '+(cyp-tl*.72)+
+      'L'+(cxp-bw-tl*.55)+' '+cyp+'L'+(cxp-bw-tl)+' '+(cyp+tl*.72)+'Z"/>'+
+      '<path d="M'+(cxp-1)+' '+(cyp-bh*.72)+'Q'+cxp+' '+(cyp-bh-3.2)+' '+(cxp+bw*.5)+' '+(cyp-bh*.5)+'Z"/>';
+    if(b==="lantern")p+='<circle cx="'+(cxp+bw*.55)+'" cy="'+(cyp-2)+'" r="1.6" fill="#fff3c4"/>';
+  }
+  const eye=(b==="jelly"||b==="eel"||b==="squid")?"":
+    '<circle cx="'+(b==="ray"?15:b==="angler"?15.5:17.4)+'" cy="'+(b==="angler"?7:7.6)+
+    '" r="1.25" fill="rgba(6,14,20,.85)"/>';
+  return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 26 18" fill="'+c+
+    '" style="'+(dim?"opacity:.3":"")+'">'+p+eye+"</svg>";
+}
+const geneHTML=f=>'<div class="gene"><span>产出 <b>'+f.g.v.toFixed(2)+
+  "</b><small style=\"color:#4a6d79\"> "+(f.g.v>=1?"+":"")+Math.round((f.g.v-1)*100)+"%</small>"+
+  '</span><span>耐受 <b>+'+f.g.h.toFixed(1)+'</b></span><span>繁育 <b>'+cdSecs(f)+"s</b></span></div>";
+
+/* ---------- TANK ---------- */
+function tabTank(){
+  const t=tank();
+  let h='<h2>投饵</h2><div class="hint">配合饲料喂草食鱼，磷虾喂肉食鱼。'+
+    (S.res.filter?"生态过滤会按鱼数自动清理废物。":"废物会随鱼数累积，研究「生态过滤」后自动清理。")+"</div><div class='grid'>";
+  for(const k in FOODS){const f=FOODS[k];
+    h+='<button class="act" data-feed="'+k+'" '+(S.bub<f.cost?"disabled":"")+">"+f.nm+"<br>"+f.cost+" 泡</button>";}
+  h+="</div>";
+  h+='<div class="prow" style="margin-bottom:2px"><span>饲料</span><span class="pv">'+Math.round(t.plant)+
+    (t.plant>95?" 过量":"")+'</span></div><div class="bar food"><i style="width:'+t.plant+'%"></i></div>'+
+    '<div class="prow" style="margin-bottom:2px"><span>磷虾</span><span class="pv">'+Math.round(t.meat)+'</span></div>'+
+    '<div class="bar meat"><i style="width:'+t.meat+'%"></i></div>'+
+    '<div class="prow" style="margin-bottom:2px"><span>污染度</span><span class="pv '+(t.waste>60?"bad":"")+'">'+
+    Math.round(t.waste)+'</span></div><div class="bar waste"><i style="width:'+t.waste+'%"></i></div>';
+  const sy=symb(t);
+  h+="<h2>共生加成</h2>";
+  const SY={scav:["清道夫共生","食泥鲴 + 肉食鱼 · 废物清除 +50%"],lumen:["生物光网","提灯灯脂 + 深渊提灯 · 发光鱼 +18%"],
+    drift:["深流编队","幽灵鳐 + 玻璃乌贼 · 全缸 +12%"],diverse:["生态多样性","同缸 4 种以上 · 数据 +20%"],
+    apex:["顶级掠食","2 条成年肉食鱼 · 全缸 +15%"]};
+  for(const k in SY)h+='<div class="row"><div class="nm" style="'+(sy[k]?"":"color:#5f8290")+'">'+SY[k][0]+
+    "<em>"+SY[k][1]+"</em></div>"+(sy[k]?'<span class="tag ok">生效</span>':'<span class="tag">未生效</span>')+"</div>";
+  h+="<h2>布景 · "+(t.i+1)+" 号缸</h2><div class='hint'>纯装饰，但会计入展馆的<b>美观分</b>。可以随时拆除，退回一半气泡。</div>";
+  for(const k of DKEYS){const d=DECOR[k];
+    h+='<div class="row"><div class="nm">'+d.nm+"<em>美观 +"+d.art+"</em></div>"+
+      (t.decor[k]?'<button class="act warn" data-undecor="'+k+'">拆除</button>'
+        :'<button class="act" data-decor="'+k+'" '+(S.bub<d.cost?"disabled":"")+">"+fmt(d.cost)+"</button>")+"</div>";}
+  h+='<div class="hint" style="margin-top:10px">容量 '+t.fish.length+" / "+cap()+" · 孵化位 "+t.eggs.length+" / "+eggCap()+"</div>";
+  return h;
+}
+/* ---------- STOCK ---------- */
+function moveBtns(u,from){
+  let h="";
+  for(const z of S.tanks){
+    if(!z.unlocked||z===from)continue;
+    h+='<button class="act" data-move="'+u+"_"+z.i+'" '+(z.fish.length>=cap()?"disabled":"")+">→0"+(z.i+1)+"</button>";}
+  return h;
+}
+function tabStock(){
+  const t=tank();refreshThreat(t);
+  let h="";
+  if(S.hold.length){
+    h+="<h2>待安置 · "+S.hold.length+'</h2><div class="hint">缸满时孵化或远征归来的鱼会先留在这里，<b>不会消失</b>，但期间不产气泡也不计入展馆。</div>';
+    for(const f of S.hold){
+      h+='<div class="row wait">'+fishIcon(f.sp,f.mo,20)+
+        '<div class="nm">'+fishName(f)+' <span class="stars">'+starStr(f)+"</span><em>"+STAGE[f.stage]+
+        " · F"+f.gen+" · "+f.sex+"</em></div>";
+      for(const z of S.tanks)if(z.unlocked)
+        h+='<button class="act'+(z.fish.length>=cap()?"":" go")+'" data-hplace="'+f.u+"_"+z.i+'" '+
+          (z.fish.length>=cap()?"disabled":"")+">放入 0"+(z.i+1)+"</button>";
+      h+='<button class="act warn" data-hrelease="'+f.u+'">放归</button></div>';
+    }
+  }
+  h+="<h2>"+(t.i+1)+" 号缸 · "+t.fish.length+"/"+cap()+"</h2>";
+  if(!t.fish.length)h+='<div class="empty">空缸。下面挑一条便宜的开始 — 玻璃小鱲对水质要求最宽松。</div>';
+  for(const f of t.fish){
+    const c=comfort(f,t),d=SPECIES[f.sp];
+    h+='<div class="row">'+fishIcon(f.sp,f.mo,20)+
+      '<div class="nm">'+fishName(f)+' <span class="stars">'+starStr(f)+"</span>"+
+      (donated(f.sp,f.mo)?' <span class="tag">已入藏</span>':"")+
+      "<em>"+STAGE[f.stage]+" · F"+f.gen+" · "+f.sex+" · "+(d.diet==="carn"?"肉食":"草食")+
+      " · 适应 "+Math.round(c*100)+"%"+((f.xp||0)?" · "+xpName(f)+"×"+f.xp:"")+"</em>"+geneHTML(f)+"</div>"+
+      '<div class="meta">'+fishIncome(f,t).toFixed(2)+"/s"+
+      '<div class="hp '+(f.hp<45?"low":"")+'"><i style="width:'+f.hp+'%"></i></div></div>'+
+      '<button class="act'+(f.lk?" go":"")+'" data-lock="'+f.u+'">'+(f.lk?"已保留":"保留")+"</button>"+
+      (f.lk?"":'<button class="act warn" data-sell="'+f.u+'">卖</button>')+
+      (canDonate(f)?'<button class="act cr" data-donate="'+f.u+'">捐赠</button>':"")+
+      moveBtns(f.u,t)+"</div>";
+  }
+  for(const d of S.dives)for(const cf of d.crew)
+    h+='<div class="row gone">'+fishIcon(cf.sp,cf.mo,20)+
+      '<div class="nm">'+fishName(cf)+"<em>远征中 · "+ZONES[d.zone].nm+" · 深度 "+d.depth+"</em></div></div>";
+  if(S.tanks.filter(z=>z.unlocked).length>1)
+    h+='<div class="hint">→02 / →03 换缸。换缸前先看目标缸的水质色带。</div>';
+  h+='<h2>商店</h2><div class="hint">买来的都是原色个体，基因平庸 — 好基因只能靠选育、远征和苗场。<br>'+
+    "三级以上鱼种<b>额外收取结晶</b>（T3 需 4、T4 需 12、T5 需 26），前期没法直接买到强力鱼种。</div>";
+  for(const k of shopList()){
+    const d=SPECIES[k],cc=fishCry(k);
+    h+='<div class="row">'+fishIcon(k,"base",20)+
+      '<div class="nm">'+d.nm+"<em>T"+d.tier+" · "+(d.diet==="carn"?"肉食":"草食")+" · "+
+      d.temp[0]+"–"+d.temp[1]+"°C · 水质 "+d.o2[0]+"–"+d.o2[1]+"</em></div>"+
+      (d.find?'<span class="tag ok">野外发现</span>':"")+fitTag(k)+
+      '<button class="act'+(cc?" cr":"")+'" data-buy="'+k+'" '+
+      ((S.bub<d.cost||S.cry<cc||t.fish.length>=cap())?"disabled":"")+">"+fmt(d.cost)+
+      (cc?"<br>+"+cc+" 结晶":"")+"</button></div>";
+  }
+  const hid=SKEYS.filter(k=>SPECIES[k].find&&!S.disc[k]).length;
+  if(hid)h+='<div class="hint">还有 '+hid+" 种野外鱼种未发现 — 去远征找。</div>";
+  return h;
+}
+/* ---------- BREED ---------- */
+function tabBreed(){
+  const t=tank(),p=pairInfo();
+  let h='<h2>配对</h2><div class="hint">同种成鱼一雌一雄。后代三项基因取双亲平均值加随机偏移，连续选育可以推到 2.00。<br>'+
+    '<b>产出</b> 0.50–2.00，1.00 为野生基准。它以<b>加法</b>投入总加成池：2.00 等于 +100%。'+
+    '所以前期能直接翻倍，后期加成堆满后同样的差距只值约 +40% — 越早选育收益越大。'+
+    '同时占星级 55% 权重，也决定卖价和品系评分（首次登记门槛 1.20）。<br>'+
+    '<b>耐受</b> 水质舒适区加宽，并降低远征失踪率与氧气消耗（越高越好）。<br>'+
+    '<b>繁育</b> 配对后的冷却秒数，<b>越短越好</b> — 短冷却意味着单位时间能多摇几次基因和形态。</div>'+
+    '<div class="hint">配出好鱼有四个确定去处：<b>入藏展馆</b>（品质计入评分，门票永久变高，还能替换旧展品）· '+
+    "<b>登记品系</b>（永久 +2% 气泡并保存基因组）· <b>编入远征</b>（产出基因决定采集效率）· "+
+    "<b>评审参评</b>（高星拿结晶，鱼还给你）。</div>";
+  const ad=t.fish.filter(f=>f.stage===2);
+  if(!ad.length)h+='<div class="empty">还没有成鱼。幼鱼在良好水质下约 5 分钟长成。</div>';
+  for(const f of ad){
+    const on=S.sel.indexOf(f.u)>=0;
+    h+='<div class="row '+(on?"sel":"")+'" data-pick="'+f.u+'" style="cursor:pointer">'+
+      fishIcon(f.sp,f.mo,20)+
+      '<div class="nm">'+fishName(f)+' <span class="stars">'+starStr(f)+"</span><em>"+f.sex+" · F"+f.gen+
+      " · 健康 "+Math.round(f.hp)+"%"+(f.cd>0?" · 冷却 "+mmss(f.cd):"")+"</em>"+geneHTML(f)+"</div>"+
+      (on?'<span class="tag ok">已选</span>':"")+"</div>";
+  }
+  if(p.ok){const a=p.a.g,b=p.b.g;
+    const cd=Math.round(75*((a.f+b.f)/2)*(t.decor.wreck?.8:1));
+    h+='<div class="hint" style="margin-top:8px">预期后代 · 产出 ≈ '+((a.v+b.v)/2).toFixed(2)+
+      "（约 "+(((a.v+b.v)/2-1)>=0?"+":"")+Math.round(((a.v+b.v)/2-1)*100)+"% 加成）"+
+      " · 耐受 ≈ +"+((a.h+b.h)/2).toFixed(1)+" · 繁育 ≈ "+Math.round(75*((a.f+b.f)/2))+
+      "s<br>本次配对冷却 "+mmss(cd)+(t.decor.wreck?"（沉船残骸已减免 20%）":"")+"</div>";
+  }else h+='<div class="hint" style="margin-top:8px">'+p.why+"</div>";
+  h+='<button class="act '+(p.ok?"go":"")+'" data-breed="1" style="width:100%" '+(p.ok?"":"disabled")+">配对产卵</button>";
+  h+="<h2>孵化中 · "+t.eggs.length+"/"+eggCap()+"</h2>";
+  if(!t.eggs.length)h+='<div class="empty">没有鱼卵。</div>';
+  for(const e of t.eggs)
+    h+='<div class="row" style="display:block"><div class="nm" style="margin-bottom:2px">'+
+      SPECIES[e.sp].nm+"·"+MORPH[e.mo].nm+" <em>F"+e.gen+" · 还需 "+mmss(e.t)+" · 产出 "+e.g.v.toFixed(2)+
+      " · 繁育 "+Math.round(75*e.g.f)+"s"+
+      '</em></div><div class="bar thin"><i style="width:'+((1-e.t/e.tot)*100)+'%"></i></div></div>';
+  if(S.res.registry){
+    const ks=Object.keys(S.strains);
+    h+="<h2>品系 · "+ks.length+"/"+SKEYS.length+'</h2><div class="hint">登记会<b>消耗</b>这条鱼，换来永久 +2% 气泡，'+
+      "并把它的基因组永久保存下来。选中一份品系后产卵会与之混合（每次 40 数据）。</div>";
+    for(const k of ks){
+      const r=S.strains[k],on=S.spliceSel===k;
+      h+='<div class="row '+(on?"sel":"")+'">'+fishIcon(k,r.mo,20)+
+        '<div class="nm">'+SPECIES[k].nm+(r.mo!=="base"?"·"+MORPH[r.mo].nm:"")+"<em>F"+r.gen+" · 产出 "+
+        r.v.toFixed(2)+" · 耐受 +"+r.h.toFixed(1)+" · 繁育 "+Math.round(75*r.f)+"s</em></div>"+
+        '<button class="act'+(on?" go":"")+'" data-splice="'+k+'">'+(on?"拼接中":"选用")+"</button></div>";
+    }
+    if(S.spliceSel)h+='<div class="hint"><button class="act" data-splice="_none">取消拼接</button></div>';
+    const cands=allFish(S).filter(canRegister);
+    if(cands.length){
+      h+='<div class="hint" style="margin-top:6px">可登记 / 可刷新纪录：</div>';
+      for(const f of cands){const cur=S.strains[f.sp];
+        h+='<div class="row">'+fishIcon(f.sp,f.mo,20)+
+          '<div class="nm">'+fishName(f)+"<em>评分 "+strainScore(f).toFixed(2)+
+          (cur?"（纪录 "+cur.score.toFixed(2)+"）":"（新鱼种）")+"</em></div>"+
+          '<button class="act go" data-reg="'+f.u+'">登记</button></div>';}
+    }else if(!ks.length)h+='<div class="empty">首次登记需要产出基因 ≥ 1.20 的成鱼。</div>';
+  }
+  return h;
+}
+/* ---------- EXPEDITION ---------- */
+function tabExp(){
+  let h='<div class="expwrap">';
+  const active=S.dives;
+  h+='<div class="exphead"><h1><small>EXPEDITION</small>远征</h1>'+
+     '<div class="depthbadge"><b>'+S.stats.maxDepth+'</b><small>MAX DEPTH</small></div></div>';
+  /* --- active dives --- */
+  for(const d of active){
+    const z=ZONES[d.zone],lo=d.o2/d.o2max<.3;
+    h+='<div class="o2"><div class="lab"><span>'+z.nm+' · 深度 '+d.depth+' / '+maxDepth(d.zone)+
+       '</span><span>氧气 '+Math.round(d.o2)+' / '+d.o2max+'</span></div>'+
+       '<div class="o2bar'+(lo?" low":"")+'"><i style="width:'+(d.o2/d.o2max*100)+'%"></i></div></div>';
+    h+='<div class="profile"><div class="axis"></div>';
+    const shown=d.logs.slice(-5);
+    for(const l of shown)
+      h+='<div class="stg done"><div>'+l.txt+' <span class="sd">深度 '+l.d+'</span></div>'+
+         (l.gain?'<div class="gain">'+l.gain+"</div>":"")+(l.loss?'<div class="loss">'+l.loss+"</div>":"")+"</div>";
+    if(d.pending){
+      const nc=Math.round(o2Cost(d,d.crew));
+      h+='<div class="stg now"><div>下一段 · 深度 '+(d.depth+1)+'</div><div class="sd">需要氧气 '+nc+
+         '，剩余 '+Math.round(d.o2)+'</div></div>';
+    }else h+='<div class="stg now"><div>下潜中…</div><div class="sd">'+mmss(d.stage.t)+" 后抵达深度 "+(d.depth+1)+"</div></div>";
+    h+="</div>";
+    const c=d.cargo;
+    h+='<div class="cargo"><h4>货舱 CARGO</h4>'+
+       '<div class="ci"><span>气泡</span><span>'+fmt(c.bub)+"</span></div>"+
+       '<div class="ci cr"><span>结晶</span><span>'+c.cry+"</span></div>"+
+       '<div class="ci"><span>数据</span><span>'+c.data+"</span></div>"+
+       (c.eggs.length?'<div class="ci"><span>鱼卵</span><span>'+c.eggs.length+"</span></div>":"")+
+       (c.relic?'<div class="ci"><span>遗物</span><span>'+RELICS[c.relic].nm+"</span></div>":"")+
+       (c.species?'<div class="ci"><span>新鱼种</span><span>'+SPECIES[c.species].nm+"</span></div>":"")+
+       '<div class="ci"><span>队员</span><span>'+d.crew.map(f=>fishName(f)).join("、")+"</span></div></div>";
+    if(d.pending){
+      const canGo=d.pending==="choice";
+      h+='<div class="decide">'+
+        '<button class="act big go" data-dive="back_'+d.id+'">返航结算</button>'+
+        (canGo?'<button class="act big" data-dive="go_'+d.id+'">继续深入</button>'
+          :'<button class="act big" disabled>'+(d.pending==="floor"?"已达海域极限":"氧气不足")+"</button>")+"</div>";
+      h+='<div class="hint">越深奖励越高，但氧气耗尽会<b>损失 35% 货舱</b>。返航则全额入账。</div>';
+    }
+  }
+  /* --- reports --- */
+  for(const r of S.reports){
+    h+='<div class="cargo" style="border-color:'+(r.forced?"#5c4526":"#2c6058")+'">'+
+       "<h4>返航报告 · "+ZONES[r.zone].nm+" 深度 "+r.depth+"</h4>"+
+       '<div class="ci"><span>'+r.why+"</span><span></span></div>"+
+       '<div class="ci"><span>气泡</span><span>+'+fmt(r.bub)+"</span></div>"+
+       '<div class="ci cr"><span>结晶</span><span>+'+r.cry+
+         (r.depthBonus?"（含深度奖励 "+r.depthBonus+"）":"")+"</span></div>"+
+       '<div class="ci"><span>数据</span><span>+'+r.data+"</span></div>"+
+       (r.eggs?'<div class="ci"><span>带回鱼卵</span><span>'+r.eggs+"</span></div>":"")+
+       (r.relic?'<div class="ci"><span>★ 遗物</span><span>'+r.relic+"</span></div>":"")+
+       (r.species?'<div class="ci"><span>★ 新鱼种</span><span>'+r.species+"</span></div>":"")+
+       (r.promoted.length?'<div class="ci"><span>晋升</span><span>'+r.promoted.join("、")+"</span></div>":"")+
+       (r.lost.length?'<div class="ci"><span>失踪</span><span>'+r.lost.join("、")+"</span></div>":"")+
+       '<button class="act go" data-rep="'+r.id+'" style="width:100%;margin-top:7px">收下</button></div>';
+  }
+  /* --- launch panel --- */
+  if(active.length<diveCap()){
+    const t=tank(),avail=t.fish.filter(f=>f.stage===2&&!f.lk);
+    const cw=crewFish();
+    h+="<h2>编组 · "+cw.length+"/"+crewCap()+"</h2>";
+    h+='<div class="crewslot">';
+    for(let i=0;i<crewCap();i++){
+      const f=cw[i];
+      h+='<div class="'+(f?"full":"")+'">'+(f?fishIcon(f.sp,f.mo,20)+
+        SPECIES[f.sp].nm+"<span>"+xpName(f)+"</span>":"空位")+"</div>";
+    }
+    h+="</div>";
+    if(!avail.length)h+='<div class="empty">'+(t.i+1)+" 号缸没有可派的成鱼（保留中和展出中的不能出海）。</div>";
+    for(const f of avail){
+      const on=S.crew.indexOf(f.u)>=0,full=cw.length>=crewCap()&&!on;
+      h+='<div class="row '+(on?"sel":"")+'" '+(full?"":'data-crew="'+f.u+'"')+' style="cursor:'+(full?"default":"pointer")+'">'+
+        fishIcon(f.sp,f.mo,20)+
+        '<div class="nm">'+fishName(f)+"<em>"+xpName(f)+"（远征 "+(f.xp||0)+" 次）· 耐受 +"+f.g.h.toFixed(1)+"</em></div>"+
+        (on?'<span class="tag ok">已编入</span>':"")+"</div>";
+    }
+    if(cw.length){
+    if(cw.length){
+      const vA=cw.reduce((a,f)=>a+f.g.v,0)/cw.length;
+      h+='<div class="hint">当前队伍采集效率 <b style="color:var(--lume)">×'+
+        clamp(.58+vA*.48,.62,2.2).toFixed(2)+"</b>（由队员的<b>产出基因</b>决定，直接放大每次遭遇的收获）。</div>";
+    }
+    h+='<div class="hint">耐受基因与远征经验都会降低氧气消耗。队员越多，遭遇掠食者时被盯上的分摊越低，但也不会更安全 — 掠食只挑一条。'+
+        '<button class="act" data-crew="_none" style="margin-left:6px">清空</button></div>';
+    }
+    h+="<h2>选择海域</h2>";
+    for(const k of ZKEYS){
+      const z=ZONES[k],ok=zoneOpen(k);
+      if(!ok){
+        h+='<div class="sitecard lock"><div class="st"><b>'+z.nm+'</b><span class="dep">深度 '+z.maxD+"</span></div>"+
+          '<div class="sd">'+(z.need==="sonar"?"需要研究「声呐阵列」":z.need==="legacy"?"需要传承特性「深度许可」":"需要完成 3 次远征")+"</div></div>";
+        continue;
+      }
+      h+='<div class="sitecard"><div class="st"><b>'+z.nm+'</b><span class="dep">最深 '+maxDepth(k)+"</span></div>"+
+        '<div class="sd">'+z.nd+"<br>每段 "+mmss(z.stage)+" · 单段氧耗 ≈ "+
+        (cw.length?Math.round(o2Cost({zone:k,depth:0},cw)):z.o2)+" · 启程 "+fmt(z.cost)+" 泡</div>"+
+        '<div style="margin-top:6px"><button class="act'+(cw.length?" go":"")+'" data-launch="'+k+'" '+
+        ((!cw.length||S.bub<z.cost)?"disabled":"")+' style="width:100%">启程</button></div></div>';
+    }
+    h+='<div class="hint">每下潜一段会遇到一次事件，然后由你决定继续还是返航。货舱里的东西<b>只有返航才入账</b>。<br>'+
+      "深度决定收获质量：卵的鱼种上限约为 <b>1+深度/2</b> 级，产出基因上限随深度线性提高，"+
+      "变异形态从深度 2 起才有机会，<b>极光需要深度 6 以上</b>。浅层只能捞到普通货色。</div>";
+  }
+  h+="</div>";
+  return h;
+}
+/* ---------- HALL ---------- */
+function museumGrid(){
+  let h='<div class="mhead"><span></span><span>原色</span><span>虹彩</span><span>极光</span></div>';
+  for(const sp of SKEYS){
+    const full=speciesComplete(sp);
+    const known=MKEYS.some(mo=>S.dex[sp+":"+mo])||donated(sp,"base");
+    const have=MKEYS.filter(mo=>donated(sp,mo)).length;
+    h+='<div class="mus'+(full?" full":"")+'"><div class="mn">'+
+      (known?SPECIES[sp].nm:"？？？")+"<small>"+(known?("T"+SPECIES[sp].tier+" · "+have+"/3"):"未发现")+"</small></div>";
+    for(const mo of MKEYS){
+      if(donated(sp,mo)){
+        const e=S.museum[mKey(sp,mo)];
+        h+='<div class="mcell have" title="'+SPECIES[sp].nm+"·"+MORPH[mo].nm+" F"+e.gen+
+          " 产出"+e.v.toFixed(2)+" 品质×"+exhibitBonus(e).toFixed(2)+'">'+fishIcon(sp,mo,26)+
+          '<span class="qp">'+(e.stars||3)+"</span></div>";
+      }else if(S.dex[sp+":"+mo]){
+        h+='<div class="mcell seen" title="图鉴已记录，尚未捐赠">'+fishIcon(sp,mo,26)+"</div>";
+      }else h+='<div class="mcell none"></div>';
+    }
+    h+="</div>";
+  }
+  return h;
+}
+function tabAqua(){
+  const sc=hallScore(),st=hallStars(S),n=museumCount();
+  let h='<div class="aqwrap"><div class="aqhead"><small>MUSEUM</small><h1>深海展馆</h1>'+
+    '<div class="rating">'+"★".repeat(st)+"☆".repeat(5-st)+"</div></div>";
+  h+='<div class="aqstat"><div><b>'+n+"/"+MUSEUM_SLOTS+'</b><span>馆藏</span></div>'+
+     "<div><b>"+sc.total+'</b><span>评分</span></div>'+
+     "<div><b>"+visitors()+'</b><span>参观者</span></div>'+
+     "<div><b>"+hallIncome().toFixed(1)+'</b><span>泡/秒</span></div></div>';
+  const mx=Math.max(40,sc.total);
+  const rows=[["馆藏",sc.coll],["稀有",sc.rare],["套装",sc.sets],["广度",sc.breadth],
+    ["陈设",sc.fit]];
+  h+='<div class="score">';
+  for(const r of rows)
+    h+='<div class="sr"><span>'+r[0]+'</span><div class="sb"><i style="width:'+
+      clamp(r[1]/mx*100,0,100)+'%"></i></div><b>'+r[1]+"</b></div>";
+  h+="</div>";
+  if(sc.capped)h+='<div class="hint" style="margin:0 0 4px;color:#c9a24a">陈设分已达上限（美观 '+
+    sc.art+" + 导览 "+sc.guide+" → 计入 "+sc.fit+"）。陈设最多只能放大现有藏品的价值，多收录几件展品才能解开上限。</div>";
+  h+="</div>";
+  /* --- visitors --- */
+  if(S.hall.vip){
+    const v=S.hall.vip,ok=vipSatisfied();
+    h+='<div class="vip"><h4>贵宾来访</h4><div class="vd">想看 <b>'+SPECIES[v.sp].nm+"·"+MORPH[v.mo].nm+
+      "</b>。"+(ok?"馆里已有这件展品，可以直接接待。":"馆里还没有 — 在贵宾离开前把它捐进来，可以额外拿到六成报酬。")+
+      "<br>剩余 "+mmss(v.t)+'</div><div class="vr">报酬 '+v.cry+" 结晶</div>"+
+      '<button class="act '+(ok?"cr":"")+'" data-vip="1" '+(ok?"":"disabled")+
+      ' style="width:100%;margin-top:7px">'+(ok?"接待贵宾":"馆藏中缺少这件")+"</button></div>";
+  }
+  if(S.hall.judge){
+    const j=S.hall.judge,el=judgeEligible();
+    h+='<div class="vip"><h4>评审来访 · '+SPECIES[j.sp].nm+'组</h4><div class="vd">评分项 <b>'+FOCUS[j.focus]+
+      "</b> · 剩余 "+mmss(j.t)+"<br>提交一条成鱼参评，<b>鱼会还给你</b>，不会入藏。</div>";
+    if(!el.length)h+='<div class="vd" style="margin-top:6px">目前没有符合的成鱼。</div>';
+    for(const f of el){const s2=Math.round(judgeScore(f)*100);
+      h+='<div class="row" style="margin-top:5px">'+fishIcon(f.sp,f.mo,20)+
+        '<div class="nm">'+fishName(f)+"<em>预计 "+s2+" 分</em></div>"+
+        '<button class="act'+(s2>=55?" cr":"")+'" data-judge="'+f.u+'">参评</button></div>';}
+    h+="</div>";
+  }
+  /* --- collection --- */
+  h+="<h2>馆藏 · "+n+"/"+MUSEUM_SLOTS+'</h2>'+
+    '<div class="hint">每个鱼种的<b>每种形态只能收录一次</b>，<b>捐进去就拿不回来了</b>。'+
+    "亮色＝已入藏，暗色＝图鉴见过但还没捐，空白＝还没见过。集齐一个鱼种的三种形态有额外奖励。</div>";
+  h+=museumGrid();
+  /* --- donatable --- */
+  const cand=allFish(S).filter(canDonate);
+  const fresh=cand.filter(f=>!donated(f.sp,f.mo)),ups=cand.filter(f=>donated(f.sp,f.mo));
+  h+="<h2>可入藏</h2>"+
+    '<div class="hint"><b>展品品质会计入评分</b> — 同样一件展品，用 5 星个体入藏的价值最高可达 1 星个体的 2.6 倍，'+
+    "而且门票收入是永久的。所以配出来的好鱼有了确定的去处。</div>";
+  if(!fresh.length)h+='<div class="empty">没有新形态可入藏。需要是<b>成鱼</b>、未被保留，且该形态尚未收录。</div>';
+  for(const f of fresh){
+    const r=donateReward(f.sp,f.mo,f);
+    const willComplete=MKEYS.filter(mo=>mo===f.mo||donated(f.sp,mo)).length===MKEYS.length;
+    h+='<div class="row">'+fishIcon(f.sp,f.mo,22)+
+      '<div class="nm">'+fishName(f)+' <span class="stars">'+starStr(f)+"</span><em>F"+f.gen+
+      " · 品质 ×"+exhibitBonus({v:f.g.v,h:f.g.h,f:f.g.f}).toFixed(2)+
+      " · 可得 "+fmt(r.bub)+" 泡 / "+r.cry+" 结晶 / "+r.data+" 数据"+
+      (willComplete?" · <b>可集齐套装</b>":"")+"</em></div>"+
+      '<button class="act cr" data-donate="'+f.u+'">入藏</button></div>';
+  }
+  if(ups.length){
+    h+="<h2>可升级展品</h2>"+
+      '<div class="hint">比现有展品更好的个体可以<b>替换</b>它，永久提高评分与门票收入（奖励按五折结算）。</div>';
+    for(const f of ups){
+      const cur=S.museum[mKey(f.sp,f.mo)];
+      const r=donateReward(f.sp,f.mo,f);
+      h+='<div class="row">'+fishIcon(f.sp,f.mo,22)+
+        '<div class="nm">'+fishName(f)+' <span class="stars">'+starStr(f)+"</span><em>品质 ×"+
+        exhibitBonus(cur).toFixed(2)+" → <b style=\"color:var(--lume)\">×"+
+        exhibitBonus({v:f.g.v,h:f.g.h,f:f.g.f}).toFixed(2)+"</b> · 可得 "+
+        Math.floor(r.bub*.45)+" 泡 / "+Math.max(1,Math.round(r.cry*.5))+" 结晶</em></div>"+
+        '<button class="act" data-donate="'+f.u+'">替换</button></div>';
+    }
+  }
+  h+='<div class="hint">入藏是永久的。如果这条鱼还想用来繁殖或远征，先留着 — 展品不会再游回缸里。</div>';
+  /* --- upgrades --- */
+  h+="<h2>展馆升级</h2>";
+  for(const k in HALLUP){const u=HALLUP[k],c=hallUpCost(k);
+    h+='<div class="node"><div class="nh"><div class="nt">'+u.nm+" Lv."+(S.hall.up[k]||0)+"</div>"+
+      '<button class="act" data-hallup="'+k+'" '+(S.bub<c?"disabled":"")+">"+fmt(c)+" 泡</button></div>"+
+      '<div class="nd">'+u.nd+"</div></div>";}
+  h+="<h2>苗场订购</h2>";
+  if(!S.res.hatchery){
+    h+='<div class="hint">尚未解锁。需要先完成研究 <b>「苗场合作」</b>（420 数据 + 40 结晶，需先有品系登记处）。'+
+      "在那之前，高基因个体只能靠自己选育或从深处的远征带回。</div>";
+    return h;
+  }
+  h+="<div class='hint'>只收<b>结晶</b>，每买一次同档价格 ×1.55。鱼种从图鉴里随机抽 — 用来补齐缺的形态。</div>";
+  for(const k in HATCH){const H=HATCH[k],c=hatchCost(k);
+    h+='<div class="node"><div class="nh"><div class="nt">'+H.nm+"</div>"+
+      '<button class="act cr" data-egg="'+k+'" '+(S.cry<c?"disabled":"")+">"+c+" 结晶</button></div>"+
+      '<div class="nd">'+H.nd+"（已购 "+((S.hatchN&&S.hatchN[k])||0)+" 次）</div></div>";}
+  return h;
+}
+/* ---------- LAB ---------- */
+function tabLab(){
+  let h="";
+  h+="<h2>科研项目</h2><div class='hint'>多阶段长线目标，报酬是<b>结晶</b>和数据 — 结晶只能靠主动玩获得。</div>";
+  if(!S.proj.active.length)h+='<div class="empty">暂无进行中的项目。下一个约 '+mmss(S.proj.cd)+" 后送来。</div>";
+  for(const a of S.proj.active){
+    const def=projDef(a.id);if(!def)continue;
+    h+='<div class="node"><div class="nh"><div class="nt">'+def.nm+'</div><span class="tag cr">'+
+      def.cry+" 结晶</span></div>";
+    def.stages.forEach((st,i)=>{
+      const done=i<a.stage,now=i===a.stage;
+      h+='<div class="nd" style="color:'+(done?"var(--lume)":now?"var(--read)":"#3f5f6b")+'">'+
+        (done?"✓ ":now?"▶ ":"· ")+st.t+
+        (now&&st.timed?"（"+mmss(st.timed-a.timer)+"）":"")+
+        (now&&st.count?"（"+Math.min(st.count.need,(S.stats[st.count.key]||0)-(a.base||0))+"/"+st.count.need+"）":"")+"</div>";
+    });
+    const st=def.stages[a.stage];
+    if(st&&st.deliver)
+      h+='<button class="act '+(canDeliver(a)?"go":"")+'" data-deliver="'+a.id+'" '+
+        (canDeliver(a)?"":"disabled")+' style="width:100%;margin-top:6px">提交</button>';
+    h+="</div>";
+  }
+  h+='<h2>数据从哪来</h2>';
+  const kinds={};let cs=0,cn=0;
+  for(const t of S.tanks)for(const f of t.fish){kinds[dexKey(f)]=1;cs+=comfort(f,t);cn++;}
+  h+='<div class="hint">0.020 × 形态数 <b>'+Object.keys(kinds).length+"</b> × 平均适应度 <b>"+
+    Math.round((cn?cs/cn:0)*100)+"%</b> × 加成 ＝ <b style=\"color:var(--lume)\">"+dataRate().toFixed(3)+
+    " /秒</b><br>算的是<b>形态种类数</b>，同种同色养再多也只算一种。此外：图鉴新形态 +10、里程碑 +18、项目与远征另计。</div>";
+  h+="<h2>研究</h2>";
+  for(const k of RKEYS){
+    const r=RESEARCH[k],done=S.res[k],lock=r.req&&!S.res[r.req];
+    const afford=S.data>=r.data&&(!r.cry||S.cry>=r.cry);
+    h+='<div class="node '+(done?"done":"")+'"><div class="nh"><div class="nt">'+r.nm+"</div>"+
+      (done?'<span class="tag ok">已完成</span>':'<button class="act'+(r.cry?" cr":"")+'" data-res="'+k+'" '+
+        ((!afford||lock)?"disabled":"")+">"+r.data+" 数据"+(r.cry?" + "+r.cry+" 结晶":"")+"</button>")+"</div>"+
+      '<div class="nd">'+r.nd+(lock?" · 需先完成「"+RESEARCH[r.req].nm+"」":"")+"</div></div>";
+  }
+  h+='<h2>深渊理论 · Lv.'+S.theory+'</h2><div class="node"><div class="nh">'+
+    '<div class="nt">全局产出 +'+Math.round(S.theory*THEORY.gain*100)+"%</div>"+
+    '<button class="act" data-theory="1" '+(S.data<theoryCost()?"disabled":"")+">"+fmt(theoryCost())+" 数据</button></div>"+
+    '<div class="nd">可无限升级，每级 +2%，成本每级 ×1.34 — 研究树打完后数据的长期去处。</div></div>';
+  const rn=Object.keys(S.relics).length;
+  h+="<h2>遗物 · "+rn+"/"+RLKEYS.length+'</h2><div class="hint">远征带回的永久加成，深处更容易出。</div>';
+  for(const k of RLKEYS){const got=S.relics[k];
+    h+='<div class="row"><div class="nm" style="'+(got?"":"color:#3f5f6b")+'">'+(got?RELICS[k].nm:"？？？")+
+      "<em>"+(got?RELICS[k].nd:"尚未发现")+"</em></div>"+(got?'<span class="tag ok">生效中</span>':"")+"</div>";}
+  h+="<h2>图鉴 · "+Object.keys(S.dex).length+"/"+(SKEYS.length*MKEYS.length)+
+    '</h2><div class="hint">见过就会记录。<b>形态种类数直接决定数据产出</b>，和展馆的收录是两回事。</div><div class="dex">';
+  for(const sp of SKEYS)for(const mo of MKEYS){
+    const has=S.dex[sp+":"+mo];
+    h+='<span class="'+(has?"on":"")+'" title="'+SPECIES[sp].nm+"·"+MORPH[mo].nm+'">'+
+      (has?fishIcon(sp,mo,22):"")+"</span>";}
+  h+="</div>";
+  h+="<h2>世代传承 · 已传承 "+(S.legacy.runs||0)+" 次</h2>"+
+    '<div class="hint">重置鱼群、货币与研究，<b>保留图鉴、遗物、发现与品系纪录</b>，换取传承点。'+
+    "当前可得 <b style=\"color:var(--crys)\">"+legacyGain()+"</b> 点（需要展馆 3 星且可得 ≥3）。"+
+    "藏品、图鉴、遗物、品系都会保留，因此<b>只在首次结算时计入传承点</b>；之后要靠新的收藏和陈设换点。持有 "+
+    (S.legacy.pts||0)+" 点。</div>"+
+    '<button class="act '+(canLegacy()?"cr":"")+'" data-legacy="1" '+(canLegacy()?"":"disabled")+
+    ' style="width:100%">进行世代传承</button>';
+  for(const k of PKEYS){const p=PERKS[k],got=S.legacy.perks[k];
+    h+='<div class="node '+(got?"done":"")+'"><div class="nh"><div class="nt">'+p.nm+"</div>"+
+      (got?'<span class="tag ok">已获得</span>':'<button class="act cr" data-perk="'+k+'" '+
+        ((S.legacy.pts||0)<p.cost?"disabled":"")+">"+p.cost+" 点</button>")+"</div>"+
+      '<div class="nd">'+p.nd+"</div></div>";}
+  h+="<h2>里程碑</h2>";
+  for(const g of GOALS){const d=S.goals[g.id];
+    h+='<div class="row"><div class="nm" style="'+(d?"":"color:#5f8290")+'">'+g.nm+"<em>"+g.nd+"</em></div>"+
+      (d?'<span class="tag ok">达成</span>':"")+"</div>";}
+  h+='<h2>最近</h2><div class="log" id="logbox">'+logHTML()+"</div>"+
+    '<div class="hint" style="margin-top:6px">完整历史见「日志」页。</div>';
+  h+='<h2>统计</h2><div class="log"><div>孵化 '+S.stats.hatched+" · 购入 "+S.stats.bought+" · 死亡 "+S.stats.died+"</div>"+
+    "<div>远征 "+S.stats.exped+" · 最深 "+S.stats.maxDepth+" · 失踪 "+S.stats.lost+"</div>"+
+    "<div>项目 "+S.stats.projects+" · 贵宾 "+S.stats.vip+" · 评审 "+S.stats.judge+"</div>"+
+    "<div>结晶累计 "+S.stats.cryTotal+" · 运营 "+mmss(S.age)+"</div></div>";
+  h+=savePanel();
+  h+='<div class="grid" style="margin-top:12px"><button class="act warn" data-reset="1">清空存档重新开始</button></div>';
+  return h;
+}
+let jFilter="all";
+function tabJournal(){
+  const counts={all:S.log.length};
+  for(const k of LKEYS)counts[k]=0;
+  for(const l of S.log)if(counts[l.k]!==undefined)counts[l.k]++;
+  let h='<h2>运营日志 · 最近 '+S.log.length+' 条</h2>'+
+    '<div class="hint">记录最近发生的事，最多保留 260 条。切换标签只看某一类。</div>';
+  h+='<div class="filt"><button data-jf="all" class="'+(jFilter==="all"?"on":"")+'">全部 '+counts.all+"</button>";
+  for(const k of LKEYS)
+    h+='<button data-jf="'+k+'" class="'+(jFilter===k?"on":"")+'" '+(counts[k]?"":"disabled")+">"+
+      LOGCAT[k].nm+" "+counts[k]+"</button>";
+  h+="</div>";
+  const list=S.log.filter(l=>jFilter==="all"||l.k===jFilter);
+  if(!list.length){h+='<div class="empty">这一类还没有记录。</div>';return h;}
+  let lastBand=null;
+  for(const l of list.slice(0,150)){
+    const d=Math.max(0,S.age-(l.a||0));
+    const band=d<300?"刚刚":d<3600?"最近一小时":d<10800?"三小时内":d<86400?"今天早些时候":"更早";
+    if(band!==lastBand){h+='<div class="jday">'+band+"</div>";lastBand=band;}
+    h+='<div class="jrow '+(l.c||"")+'"><div class="jt">'+l.t+'</div><div class="jm">'+ago(l.a||0)+"</div></div>";
+  }
+  if(list.length>150)h+='<div class="hint" style="margin-top:8px">还有 '+(list.length-150)+" 条更早的记录未显示。</div>";
+  return h;
+}
+function savePanel(){
+  const names=storageNames();
+  let h="<h2>存档</h2>";
+  if(!names.length)h+='<div class="warnbox"><b>这个环境不允许保存。</b>关掉页面进度就会丢失。常见原因是隐私窗口或 Safari 直接打开本地文件。请用下面的导出功能手动备份。</div>';
+  else if(IO.ok===false)h+='<div class="warnbox"><b>最近一次保存失败。</b>'+(IO.err||"")+" 请立刻导出留底。</div>";
+  const ago=IO.at?Math.max(0,Math.round((Date.now()-IO.at)/1000)):null;
+  h+='<div class="log"><div>存储位置：'+(names.length?names.join(" ＋ "):"无")+"</div>"+
+    "<div>上次保存："+(ago===null?"尚未保存":(ago<60?ago+" 秒前":Math.round(ago/60)+" 分钟前"))+"</div></div>"+
+    '<div class="hint" style="margin-top:8px">进度存在<b>这台设备的这个浏览器</b>里。换设备或清理浏览数据都会读不到，用存档码搬家。</div>'+
+    '<div class="grid"><button class="act" data-io="export">导出存档码</button>'+
+    '<button class="act" data-io="copy">复制</button><button class="act" data-io="file">下载备份</button></div>'+
+    '<textarea id="ioBox" spellcheck="false" placeholder="点导出生成，或粘贴存档码后点导入">'+
+    ioText.replace(/</g,"&lt;")+"</textarea>"+
+    '<div class="grid"><button class="act go" data-io="import">导入存档码</button></div>'+
+    (ioMsg?'<div class="hint" style="margin-top:6px">'+ioMsg+"</div>":"");
+  return h;
+}
+function logHTML(){
+  if(!S.log.length)return"<div>—</div>";
+  return S.log.slice(0,18).map(l=>'<div class="'+l.c+'">'+l.t+"</div>").join("");
+}
+function renderTab(force){
+  const b=$("body");
+  if(holding&&force)force=false;
+  const ae=document.activeElement;
+  if(force&&ae&&ae.tagName==="TEXTAREA")force=false;
+  let html=null;
+  if(TAB==="tank"&&(force||dirty.tank))html=tabTank();
+  if(TAB==="stock"&&(force||dirty.stock))html=tabStock();
+  if(TAB==="breed"&&(force||dirty.breed))html=tabBreed();
+  if(TAB==="exp"&&(force||dirty.exp))html=tabExp();
+  if(TAB==="aqua"&&(force||dirty.aqua))html=tabAqua();
+  if(TAB==="lab"&&(force||dirty.lab||dirty.proj))html=tabLab();
+  if(TAB==="journal"&&(force||dirty.journal))html=tabJournal();
+  if(html!==null){
+    const sp=b.scrollTop;b.innerHTML=html;b.scrollTop=sp;
+    dirty.tank=dirty.stock=dirty.breed=dirty.exp=dirty.aqua=dirty.lab=dirty.proj=dirty.journal=0;
+  }
+  if(TAB==="tank"){
+    const t=tank(),bars=b.querySelectorAll(".bar i");
+    if(bars.length>=3){bars[0].style.width=t.plant+"%";bars[1].style.width=t.meat+"%";bars[2].style.width=t.waste+"%";}
+  }
+  if(TAB==="lab"&&dirty.log){const lb=$("logbox");if(lb)lb.innerHTML=logHTML();dirty.log=0;}
+}
+/* ===================== input ===================== */
+$("tankpick").addEventListener("click",e=>{
+  const b=e.target.closest("[data-tk]");if(!b||b.disabled)return;
+  S.at=+b.dataset.tk;S.sel=[];S.crew=[];
+  renderPick();renderWater(1);renderTab(1);
+});
+$("ebtn").addEventListener("click",()=>{eventAction();renderTab(1);renderWallet();});
+for(const p of [["sTemp","temp"],["sO2","o2"]]){
+  const s=$(p[0]),key=p[1];
+  s.addEventListener("pointerdown",()=>s.dataset.drag="1");
+  s.addEventListener("pointerup",()=>{delete s.dataset.drag;});
+  s.addEventListener("input",()=>{tank()[key]=+s.value;});
+  s.addEventListener("change",()=>{delete s.dataset.drag;});
+}
+$("nav").addEventListener("click",e=>{
+  const b=e.target.closest("[data-t]");if(!b)return;
+  TAB=b.dataset.t;
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  renderTab(1);
+});
+$("body").addEventListener("input",e=>{if(e.target&&e.target.id==="ioBox")ioText=e.target.value;});
+$("body").addEventListener("pointerdown",()=>{holding=true;});
+window.addEventListener("pointerup",()=>{holding=false;});
+window.addEventListener("pointercancel",()=>{holding=false;});
+$("body").addEventListener("click",e=>{
+  const el=e.target.closest("[data-feed],[data-decor],[data-undecor],[data-buy],[data-sell],[data-lock],[data-move],"+
+    "[data-hplace],[data-hrelease],[data-pick],[data-breed],[data-splice],[data-reg],[data-res],[data-theory],"+
+    "[data-crew],[data-launch],[data-dive],[data-rep],[data-vip],[data-judge],[data-hallup],"+
+    "[data-donate],[data-egg],[data-deliver],[data-legacy],[data-perk],[data-io],[data-jf],[data-reset]");
+  if(!el)return;
+  const d=el.dataset;
+  if(d.feed)feed(d.feed);
+  else if(d.decor)buyDecor(d.decor);
+  else if(d.undecor)sellDecor(d.undecor);
+  else if(d.buy)buyFish(d.buy);
+  else if(d.sell)sellFish(+d.sell);
+  else if(d.lock){const f=allFish(S).find(x=>x.u===+d.lock);if(f){f.lk=!f.lk;dirty.stock=dirty.exp=1;}}
+  else if(d.move){const a=d.move.split("_");moveFish(+a[0],+a[1]);}
+  else if(d.hplace){const a=d.hplace.split("_");placeHeld(+a[0],+a[1]);}
+  else if(d.hrelease)releaseHeld(+d.hrelease);
+  else if(d.pick)toggleSel(+d.pick);
+  else if(d.breed)breed();
+  else if(d.splice){S.spliceSel=(d.splice==="_none"||S.spliceSel===d.splice)?null:d.splice;dirty.breed=1;}
+  else if(d.reg)registerStrain(+d.reg);
+  else if(d.res)research(d.res);
+  else if(d.theory)buyTheory();
+  else if(d.crew){
+    if(d.crew==="_none")S.crew=[];
+    else{const u=+d.crew,i=S.crew.indexOf(u);
+      if(i>=0)S.crew.splice(i,1);else if(S.crew.length<crewCap())S.crew.push(u);}
+    dirty.exp=1;
+  }
+  else if(d.launch)startDive(d.launch);
+  else if(d.dive){const a=d.dive.split("_");diveDecide(+a[1],a[0]==="go");}
+  else if(d.rep){const i=S.reports.findIndex(r=>r.id===+d.rep);if(i>=0)S.reports.splice(i,1);dirty.exp=1;}
+  else if(d.donate)donate(+d.donate);
+  else if(d.vip)claimVip();
+  else if(d.judge)submitJudge(+d.judge);
+  else if(d.hallup)buyHallUp(d.hallup);
+  else if(d.egg)buyEgg(d.egg);
+  else if(d.deliver)deliverProj(d.deliver);
+  else if(d.legacy){if(confirm("世代传承会重置鱼群、货币和研究，保留图鉴/遗物/品系。确定？"))doLegacy();}
+  else if(d.perk)buyPerk(d.perk);
+  else if(d.io){
+    const box=$("ioBox");
+    if(box&&d.io!=="export")ioText=box.value;
+    if(d.io==="export"){ioText=exportSave();ioMsg="已生成，全选复制保存到别处。";}
+    else if(d.io==="copy"){
+      if(!ioText)ioText=exportSave();
+      if(navigator.clipboard&&navigator.clipboard.writeText)
+        navigator.clipboard.writeText(ioText).then(()=>{ioMsg="已复制。";dirty.lab=1;renderTab(1);},
+          ()=>{ioMsg="复制被拦下了，请手动全选复制。";dirty.lab=1;renderTab(1);});
+      else ioMsg="这个浏览器不支持一键复制。";
+    }else if(d.io==="file"){
+      try{
+        const blob=new Blob([JSON.stringify(S,null,1)],{type:"application/json"});
+        const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+        a.download="deep-tank-save-"+new Date().toISOString().slice(0,10)+".json";a.click();
+        setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+        ioMsg="已开始下载。";
+      }catch(err){ioMsg="下载失败，请改用存档码。";}
+    }else if(d.io==="import"){
+      if(confirm("导入会覆盖当前进度，确定？")){
+        const err=importSave(ioText);
+        if(err)ioMsg="导入失败 — "+err;
+        else{ioMsg="";ioText="";log("存档已导入","gd");
+          dirty.pick=dirty.tank=dirty.stock=dirty.breed=dirty.exp=dirty.aqua=dirty.lab=1;
+          renderPick();renderWater(1);}
+      }
+    }
+    dirty.lab=1;
+  }
+  else if(d.jf){jFilter=d.jf;dirty.journal=1;}
+  else if(d.reset){
+    if(confirm("清空存档，从零开始？")){S=newState();save(true);renderPick();renderWater(1);}
+  }
+  renderTab(1);renderWallet();renderWater();
+});
+
+/* ===================== save / load ===================== */
+let bakAt=0;
+function save(force){
+  S.t=Date.now();
+  const json=JSON.stringify(S);
+  Store.set(KEY,json);
+  if(force||Date.now()-bakAt>120000){bakAt=Date.now();Store.set(BAK,json);}
+}
+function exportSave(){try{return btoa(unescape(encodeURIComponent(JSON.stringify(S))));}catch(e){return"";}}
+function importSave(code){
+  let txt=String(code||"").trim();
+  if(!txt)return "没有内容";
+  try{
+    if(txt.charAt(0)!=="{")txt=decodeURIComponent(escape(atob(txt)));
+    const o=JSON.parse(txt);
+    if(!o||!o.tanks||!o.stats)return "这不是一份 DEEP TANK 存档";
+    adopt(o);save(true);return "";
+  }catch(e){return "解析失败：内容可能被截断或改动过";}
+}
+/* v2 kept five morphs and four tanks; fold them into the v3 shape */
+function migrate(o){
+  const legacy={pts:0,perks:{},runs:0};
+  const st=newState(legacy);
+  const map={base:"base",albino:"irid",melanic:"irid",irid:"irid",aurora:"aurora"};
+  if(o.dex)for(const k in o.dex){const p=k.split(":");if(SPECIES[p[0]]&&map[p[1]])st.dex[p[0]+":"+map[p[1]]]=1;}
+  if(o.disc)for(const k in o.disc)if(SPECIES[k])st.disc[k]=1;
+  if(o.relics)for(const k in o.relics)if(RELICS[k])st.relics[k]=1;
+  if(o.strains)for(const k in o.strains){
+    const r=o.strains[k];
+    if(SPECIES[k]&&r)st.strains[k]={sp:k,mo:map[r.mo]||"base",v:clamp(r.v||1,.5,2),h:clamp(r.h||0,0,7),
+      f:clamp(r.f||1,.45,1.7),gen:r.gen||1,stars:r.stars||3,score:r.score||1};
+  }
+  const dexN=Object.keys(st.dex).length;
+  st.bub=1200+dexN*120;
+  st.cry=10+Object.keys(st.relics).length*4+Object.keys(st.strains).length*3;
+  st.data=120;
+  st.tanks[0].fish.push(makeFish("minnow","base",1),makeFish("guppy","base",1));
+  log("检测到旧版本存档 — 图鉴、遗物、发现与品系已继承，并附赠启动物资","gd");
+  return st;
+}
+function adopt(o){
+  if(o.v!==3){S=migrate(o);return;}
+  S=Object.assign(newState(o.legacy),o);
+  while(S.tanks.length<3)S.tanks.push(newTank(S.tanks.length));
+  if(S.tanks.length>3)S.tanks.length=3;
+  S.tanks.forEach((t,i)=>{t.i=i;if(!t.decor)t.decor={};if(!t.eggs)t.eggs=[];if(!t.fish)t.fish=[];});
+  ["dex","disc","goals","res","strains","relics","museum"].forEach(k=>{if(!S[k])S[k]={};});
+  for(const t of S.tanks)for(const f of t.fish)if(f.show!==undefined)delete f.show;
+  ["hold","log","dives","crew","reports","sel"].forEach(k=>{if(!S[k])S[k]=[];});
+  if(!S.proj)S.proj={active:[],done:{},cd:60};
+  if(!S.hall)S.hall={open:true,vip:null,vipCd:300,judge:null,judgeCd:540,up:{light:0,guide:0,ticket:0}};
+  if(!S.hall.up)S.hall.up={light:0,guide:0,ticket:0};
+  if(!S.legacy)S.legacy={pts:0,perks:{},runs:0,claimedP:0};
+  if(S.legacy.claimedP===undefined)S.legacy.claimedP=0;
+  if(!S.stats)S.stats=freshStats();
+  for(const k in freshStats())if(S.stats[k]===undefined)S.stats[k]=0;
+  S.theory=S.theory||0;
+  S.tanks[0].unlocked=1;
+  if(S.res.tank2)S.tanks[1].unlocked=1;
+  if(S.res.tank3)S.tanks[2].unlocked=1;
+  for(const t of S.tanks)for(const f of t.fish)uid=Math.max(uid,f.u+1);
+  for(const f of S.hold)uid=Math.max(uid,f.u+1);
+  for(const d of S.dives)for(const f of d.crew)uid=Math.max(uid,f.u+1);
+  catchUp();
+}
+function catchUp(){
+  const away=clamp((Date.now()-(S.t||Date.now()))/1000,0,60*60*8);
+  S.t=Date.now();
+  if(away<=8)return;
+  /* offline runs at a reduced rate — idling is upkeep, not progress */
+  let left=away,eff=0;
+  while(left>0){
+    const d=Math.min(5,left);
+    const scale=eff<7200?1:.35;
+    step(d*scale,true);
+    left-=d;eff+=d;
+  }
+  log("离开 "+(away<3600?Math.round(away/60)+" 分钟":(away/3600).toFixed(1)+" 小时")+" 已结算");
+  dirty.tank=dirty.stock=dirty.breed=dirty.exp=dirty.aqua=dirty.lab=1;
+}
+async function load(){
+  for(const k of [KEY,BAK].concat(LEGACY)){
+    const raw=await Store.get(k);
+    if(!raw)continue;
+    try{
+      const o=JSON.parse(raw);
+      if(!o||!o.tanks)continue;
+      adopt(o);
+      if(k!==KEY){log(k===BAK?"主存档读取失败，已从备份恢复":"已从旧版本存档升级","wn");save(true);}
+      return;
+    }catch(e){}
+  }
+}
+/* ===================== loop ===================== */
+let last=performance.now(),acc=0,uiAcc=0,saveAcc=0,liveAcc=0;
+function loop(now){
+  const gap=(now-last)/1000,dt=Math.min(.25,gap);last=now;
+  if(gap>3)catchUp();
+  acc+=dt;uiAcc+=dt;saveAcc+=dt;
+  while(acc>=.25){step(.25,false);acc-=.25;}
+  animate(dt);render();
+  if(uiAcc>=.4){
+    uiAcc=0;liveAcc+=.4;
+    renderWallet();renderWater();renderEvent();
+    if(dirty.pick){renderPick();dirty.pick=0;}
+    renderTab(false);
+    if(liveAcc>=1.2){liveAcc=0;if(TAB!=="lab")renderTab(true);}
+  }
+  S.t=Date.now();
+  if(saveAcc>=12){saveAcc=0;save();}
+  requestAnimationFrame(loop);
+}
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden)save(true);
+  else{catchUp();last=performance.now();renderPick();renderWater(1);renderTab(1);renderWallet();}
+});
+window.addEventListener("beforeunload",()=>save(true));
+load().then(()=>{
+  if(!S.log.length)log("水槽已注水。买一条鱼，把温度调进它的色带，然后去「远征」看看。");
+  renderPick();renderWater(1);renderTab(1);renderWallet();renderEvent();
+  requestAnimationFrame(loop);
+});
+</script>
+</body>
+</html>
