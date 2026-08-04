@@ -81,6 +81,37 @@ nav button em{position:absolute;top:3px;right:6px;width:5px;height:5px;border-ra
 nav button em.cr{background:var(--crys)}
 
 main{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px;min-height:130px}
+
+/* ===== desktop: keep the tank on screen while browsing the tabs ===== */
+@media (min-width:880px){
+  body{align-items:stretch}
+  #panel{max-width:1180px;height:100vh;display:grid;
+    grid-template-columns:424px minmax(0,1fr);
+    grid-template-rows:auto auto minmax(0,1fr);
+    grid-template-areas:"head nav" "tank body" "water body"}
+  header{grid-area:head;border-right:1px solid var(--rule)}
+  #tankwrap{grid-area:tank;border-right:1px solid var(--rule)}
+  #water{grid-area:water;border-right:1px solid var(--rule);border-bottom:0;overflow-y:auto}
+  nav{grid-area:nav}
+  main{grid-area:body;min-height:0;padding:12px 14px}
+  nav button{font-size:11px;padding:9px 0 8px}
+  nav button b{font-size:7.5px}
+  .wallet{gap:18px}
+  .w{font-size:15px}
+  .dex{grid-template-columns:repeat(8,1fr)}
+  .mus,.mhead{grid-template-columns:1fr repeat(3,46px)}
+  .mcell{height:40px}
+  .grid button{min-width:96px}
+  button.act{font-size:9.5px;padding:6px 10px}
+  .crewslot div{height:60px}
+}
+@media (min-width:1320px){
+  #panel{max-width:1340px;grid-template-columns:500px minmax(0,1fr)}
+  main{padding:14px 18px}
+  .dex{grid-template-columns:repeat(10,1fr)}
+  /* long flat lists read better split in two on a very wide column */
+  .cols2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;align-items:start}
+}
 main::-webkit-scrollbar{width:6px}
 main::-webkit-scrollbar-thumb{background:#1e3746;border-radius:3px}
 
@@ -1473,11 +1504,18 @@ let CW=380,CH=170,dpr=Math.min(2,window.devicePixelRatio||1);
 const bubbles=[];
 function resize(){
   const w=cv.parentElement.clientWidth;
-  CW=w;CH=clamp(Math.round(w*.44),120,178);
+  const wide=window.innerWidth>=880;
+  CW=w;
+  if(wide){
+    /* leave room for the header, water panel and a little breathing space */
+    const room=window.innerHeight-330;
+    CH=clamp(Math.round(Math.min(w*.62,room)),140,320);
+  }else CH=clamp(Math.round(w*.44),120,178);
   cv.width=CW*dpr;cv.height=CH*dpr;cv.style.height=CH+"px";
   cx.setTransform(dpr,0,0,dpr,0,0);
 }
 new ResizeObserver(resize).observe(cv.parentElement);
+window.addEventListener("resize",resize);
 resize();
 const dirOf=f=>f.dir===undefined?1:f.dir;
 const pitchOf=f=>(f.pitch||0)*(dirOf(f)<0?-1:1);
@@ -1927,6 +1965,7 @@ function tabStock(){
     h+='<div class="hint">→02 / →03 换缸。换缸前先看目标缸的水质色带。</div>';
   h+='<h2>商店</h2><div class="hint">买来的都是原色个体，基因平庸 — 好基因只能靠选育、远征和苗场。<br>'+
     "三级以上鱼种<b>额外收取结晶</b>（T3 需 4、T4 需 12、T5 需 26），前期没法直接买到强力鱼种。</div>";
+  h+='<div class="cols2">';
   for(const k of shopList()){
     const d=SPECIES[k],cc=fishCry(k);
     h+='<div class="row">'+fishIcon(k,"base",20)+
@@ -1937,6 +1976,7 @@ function tabStock(){
       ((S.bub<d.cost||S.cry<cc||t.fish.length>=cap())?"disabled":"")+">"+fmt(d.cost)+
       (cc?"<br>+"+cc+" 结晶":"")+"</button></div>";
   }
+  h+="</div>";
   const hid=SKEYS.filter(k=>SPECIES[k].find&&!S.disc[k]).length;
   if(hid)h+='<div class="hint">还有 '+hid+" 种野外鱼种未发现 — 去远征找。</div>";
   return h;
@@ -2269,10 +2309,11 @@ function tabLab(){
     '<button class="act" data-theory="1" '+(S.data<theoryCost()?"disabled":"")+">"+fmt(theoryCost())+" 数据</button></div>"+
     '<div class="nd">可无限升级，每级 +2%，成本每级 ×1.34 — 研究树打完后数据的长期去处。</div></div>';
   const rn=Object.keys(S.relics).length;
-  h+="<h2>遗物 · "+rn+"/"+RLKEYS.length+'</h2><div class="hint">远征带回的永久加成，深处更容易出。</div>';
+  h+="<h2>遗物 · "+rn+"/"+RLKEYS.length+'</h2><div class="hint">远征带回的永久加成，深处更容易出。</div><div class="cols2">';
   for(const k of RLKEYS){const got=S.relics[k];
     h+='<div class="row"><div class="nm" style="'+(got?"":"color:#3f5f6b")+'">'+(got?RELICS[k].nm:"？？？")+
       "<em>"+(got?RELICS[k].nd:"尚未发现")+"</em></div>"+(got?'<span class="tag ok">生效中</span>':"")+"</div>";}
+  h+="</div>";
   h+="<h2>图鉴 · "+Object.keys(S.dex).length+"/"+(SKEYS.length*MKEYS.length)+
     '</h2><div class="hint">见过就会记录。<b>形态种类数直接决定数据产出</b>，和展馆的收录是两回事。</div><div class="dex">';
   for(const sp of SKEYS)for(const mo of MKEYS){
@@ -2292,10 +2333,11 @@ function tabLab(){
       (got?'<span class="tag ok">已获得</span>':'<button class="act cr" data-perk="'+k+'" '+
         ((S.legacy.pts||0)<p.cost?"disabled":"")+">"+p.cost+" 点</button>")+"</div>"+
       '<div class="nd">'+p.nd+"</div></div>";}
-  h+="<h2>里程碑</h2>";
+  h+='<h2>里程碑</h2><div class="cols2">';
   for(const g of GOALS){const d=S.goals[g.id];
     h+='<div class="row"><div class="nm" style="'+(d?"":"color:#5f8290")+'">'+g.nm+"<em>"+g.nd+"</em></div>"+
       (d?'<span class="tag ok">达成</span>':"")+"</div>";}
+  h+="</div>";
   h+='<h2>最近</h2><div class="log" id="logbox">'+logHTML()+"</div>"+
     '<div class="hint" style="margin-top:6px">完整历史见「日志」页。</div>';
   h+='<h2>统计</h2><div class="log"><div>孵化 '+S.stats.hatched+" · 购入 "+S.stats.bought+" · 死亡 "+S.stats.died+"</div>"+
